@@ -1,0 +1,3441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>KINGDOM CRUSH</title>
+<style>
+:root{
+  --gold:#ffd166;
+  --gold-dark:#c9932f;
+  --purple-deep:#150a30;
+  --purple-mid:#341066;
+  --blue-deep:#0a1130;
+  --emerald:#3ddc73;
+  --panel-glass: rgba(16,12,34,0.80);
+  --panel-glass-light: rgba(255,255,255,0.06);
+  --panel-border: rgba(255,209,102,0.28);
+  --text-light:#f5f1ff;
+  --text-dim:#b3a8de;
+  --danger:#ff5d6c;
+  --radius-lg:22px;
+  --radius-md:14px;
+  --font-display:'Courier New', Courier, monospace;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+*{box-sizing:border-box;user-select:none;-webkit-user-select:none;margin:0;padding:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;background:#050414;font-family:var(--font-body);color:var(--text-light);display:flex;justify-content:center;align-items:center;}
+
+#game-container{
+  position:relative;width:100%;max-width:480px;height:100%;max-height:900px;
+  background:linear-gradient(160deg,var(--blue-deep),var(--purple-deep) 60%,#08060f);
+  box-shadow:0 0 60px rgba(0,0,0,0.9), inset 0 0 120px rgba(0,0,0,0.5);
+  overflow:hidden;border-radius:0;
+}
+
+.screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;opacity:0;pointer-events:none;transform:translateY(10px) scale(0.99);transition:opacity .28s ease, transform .28s ease;}
+.screen.screen-active{opacity:1;pointer-events:auto;transform:translateY(0) scale(1);}
+
+/* ---------- Ambient background decor ---------- */
+.orb{position:absolute;border-radius:50%;filter:blur(40px);opacity:0.45;pointer-events:none;animation:floatOrb 12s ease-in-out infinite;}
+@keyframes floatOrb{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(14px,-22px) scale(1.08);}}
+.stars-layer{position:absolute;inset:0;pointer-events:none;
+  background-image:radial-gradient(1.5px 1.5px at 20% 30%, #fff8, transparent),
+                    radial-gradient(1.5px 1.5px at 70% 60%, #fff6, transparent),
+                    radial-gradient(1px 1px at 40% 80%, #fff5, transparent),
+                    radial-gradient(1.5px 1.5px at 85% 20%, #fff7, transparent),
+                    radial-gradient(1px 1px at 55% 45%, #fff4, transparent),
+                    radial-gradient(1.5px 1.5px at 10% 65%, #fff6, transparent);
+  animation:twinkle 4s ease-in-out infinite;
+}
+@keyframes twinkle{0%,100%{opacity:0.5;}50%{opacity:1;}}
+
+/* ---------- Buttons & panels ---------- */
+.btn-glow{
+  font-family:var(--font-display);font-weight:bold;font-size:16px;letter-spacing:1px;color:#2a1a06;
+  background:linear-gradient(180deg,#ffe9a8,var(--gold) 55%,var(--gold-dark));
+  border:none;border-radius:var(--radius-md);padding:14px 22px;cursor:pointer;
+  box-shadow:0 4px 0 #8a611c, 0 8px 18px rgba(255,209,102,0.35), inset 0 1px 0 rgba(255,255,255,0.6);
+  display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .08s ease, box-shadow .08s ease;
+  width:100%;
+}
+.btn-glow:active{transform:translateY(3px);box-shadow:0 1px 0 #8a611c, 0 3px 8px rgba(255,209,102,0.3), inset 0 1px 0 rgba(255,255,255,0.6);}
+.btn-glow.secondary{color:var(--text-light);background:linear-gradient(180deg,#3a2f66,#241a4a);box-shadow:0 4px 0 #150f30, 0 8px 16px rgba(120,90,220,0.25), inset 0 1px 0 rgba(255,255,255,0.12);}
+.btn-glow.secondary:active{box-shadow:0 1px 0 #150f30, 0 3px 8px rgba(120,90,220,0.2);}
+.btn-glow.danger{color:#fff;background:linear-gradient(180deg,#ff8d97,var(--danger) 60%,#c22e3c);box-shadow:0 4px 0 #7a1520, 0 8px 16px rgba(255,93,108,0.3);}
+.btn-glow.green{color:#0c2a10;background:linear-gradient(180deg,#a4f7bd,var(--emerald) 55%,#1f9e4c);box-shadow:0 4px 0 #0f5c26, 0 8px 16px rgba(61,220,115,0.3);}
+.btn-glow.sm{padding:10px 14px;font-size:12px;}
+.btn-glow:disabled{opacity:0.4;cursor:not-allowed;}
+
+.glass-panel{background:var(--panel-glass);border:1px solid var(--panel-border);border-radius:var(--radius-lg);backdrop-filter:blur(6px);}
+
+.chip{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.08);font-size:12px;font-weight:700;}
+
+.screen-header{display:flex;align-items:center;gap:10px;padding:14px 14px 8px;}
+.screen-header h2{font-family:var(--font-display);font-size:16px;letter-spacing:2px;color:var(--gold);text-shadow:0 0 12px rgba(255,209,102,0.5);flex:1;text-align:center;margin-right:34px;}
+.btn-back{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;width:34px;height:34px;border-radius:10px;font-size:16px;cursor:pointer;}
+
+/* ================= MENU ================= */
+#screen-menu{align-items:center;justify-content:space-between;padding:26px 22px 30px;position:relative;}
+.menu-top-stats{display:flex;gap:8px;width:100%;justify-content:center;}
+.menu-crown{font-size:54px;filter:drop-shadow(0 0 18px rgba(255,209,102,0.6));animation:bob 3s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+.menu-logo{font-family:var(--font-display);font-size:38px;font-weight:bold;text-align:center;line-height:1.15;letter-spacing:2px;
+  background:linear-gradient(180deg,#fff6d8,var(--gold) 55%,var(--gold-dark));-webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 0 30px rgba(255,209,102,0.35);
+}
+.menu-logo span{display:block;background:linear-gradient(180deg,#c9f7d6,var(--emerald) 55%,#1f9e4c);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.menu-sub{font-size:11px;letter-spacing:3px;color:var(--text-dim);text-align:center;margin-top:6px;}
+.menu-mid{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.menu-buttons{display:flex;flex-direction:column;gap:12px;width:100%;max-width:300px;}
+.menu-footer{font-size:10px;color:var(--text-dim);text-align:center;letter-spacing:1px;}
+
+/* ================= LEVEL MAP ================= */
+#screen-levelmap{background:linear-gradient(180deg,#0b1330,#150a30);}
+#levelmap-list{flex:1;overflow-y:auto;padding:20px 24px 100px;display:flex;flex-direction:column;gap:0;position:relative;}
+.level-node{display:flex;flex-direction:column;align-items:center;gap:4px;width:110px;margin:14px 0;position:relative;}
+.level-node.left{align-self:flex-start;margin-left:6px;}
+.level-node.right{align-self:flex-end;margin-right:6px;}
+.node-circle{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:20px;
+  background:radial-gradient(circle at 35% 30%, #fff2, transparent 60%), linear-gradient(180deg,var(--accent,#7ed957),#1c1c1c);
+  border:3px solid rgba(255,255,255,0.25);box-shadow:0 0 0 4px rgba(0,0,0,0.25), 0 6px 14px rgba(0,0,0,0.4);color:#0b0b0b;text-shadow:0 1px 0 rgba(255,255,255,0.3);
+}
+.level-node.locked .node-circle{background:linear-gradient(180deg,#3a3a44,#1c1c22);color:#777;border-color:rgba(255,255,255,0.08);box-shadow:none;filter:grayscale(0.6);}
+.level-node.current .node-circle{box-shadow:0 0 0 4px rgba(255,209,102,0.25), 0 0 24px rgba(255,209,102,0.6);animation:pulseNode 1.6s ease-in-out infinite;border-color:var(--gold);}
+@keyframes pulseNode{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+.node-stars{font-size:11px;letter-spacing:1px;color:var(--gold);height:12px;}
+.node-biome{font-size:9px;color:var(--text-dim);letter-spacing:0.5px;text-align:center;max-width:90px;}
+.levelmap-topbar{display:flex;flex-direction:column;gap:10px;padding:14px 16px;}
+.levelmap-toprow{display:flex;justify-content:space-between;align-items:center;}
+
+/* ================= SHOP ================= */
+#screen-shop{background:linear-gradient(180deg,#12102a,#1c1240);}
+.shop-tabs{display:flex;gap:8px;padding:0 16px 10px;}
+.shop-tab{flex:1;text-align:center;padding:10px;border-radius:12px;font-size:12px;font-weight:bold;letter-spacing:1px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:var(--text-dim);cursor:pointer;}
+.shop-tab.active{background:linear-gradient(180deg,#ffe9a8,var(--gold));color:#2a1a06;border-color:transparent;}
+.shop-list{flex:1;overflow-y:auto;padding:6px 14px 90px;display:flex;flex-direction:column;gap:10px;}
+.shop-item-card{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;background:rgba(255,255,255,0.045);border:1px solid rgba(255,255,255,0.08);}
+.shop-icon{width:46px;height:46px;min-width:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;
+  background:radial-gradient(circle at 35% 30%, rgba(255,255,255,0.25), transparent 60%), linear-gradient(160deg,#3a2f66,#1c1440);
+  box-shadow:0 0 14px rgba(140,110,255,0.35), inset 0 0 0 1px rgba(255,255,255,0.1);
+}
+.shop-info{flex:1;min-width:0;}
+.shop-name{font-size:12.5px;font-weight:700;}
+.owned-count{color:var(--gold);font-size:10px;margin-left:4px;}
+.shop-desc{font-size:10.5px;color:var(--text-dim);margin-top:2px;line-height:1.3;}
+.shop-buy-btn{font-family:var(--font-display);font-size:11px;font-weight:bold;padding:9px 12px;border-radius:10px;border:none;cursor:pointer;white-space:nowrap;
+  background:linear-gradient(180deg,#ffe9a8,var(--gold));color:#2a1a06;box-shadow:0 3px 0 #8a611c;min-width:76px;
+}
+.shop-buy-btn.equip{background:linear-gradient(180deg,#c9f7d6,var(--emerald));box-shadow:0 3px 0 #1f9e4c;color:#0c2a10;}
+.shop-buy-btn.equipped{background:linear-gradient(180deg,#555,#333);box-shadow:0 3px 0 #111;color:#bbb;}
+
+/* ================= SETTINGS ================= */
+.settings-list{flex:1;display:flex;flex-direction:column;gap:14px;padding:20px;}
+
+/* ================= LEADERBOARD ================= */
+.lb-toprow{display:flex;align-items:center;gap:8px;padding:0 14px 10px;}
+.lb-toprow .chip{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#leaderboard-state{padding:0 14px;}
+.lb-loading,.lb-empty{text-align:center;color:var(--text-dim,#aaa);font-size:12px;padding:20px 0;}
+.lb-offline{text-align:center;color:var(--gold);font-size:11px;background:rgba(255,209,102,0.1);border:1px solid rgba(255,209,102,0.25);border-radius:8px;padding:8px;margin:0 0 10px;}
+#leaderboard-list{flex:1;overflow-y:auto;padding:0 14px 20px;display:flex;flex-direction:column;gap:6px;}
+.lb-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);}
+.lb-row.lb-me{border-color:var(--gold);background:rgba(255,209,102,0.12);}
+.lb-row.lb-top{background:linear-gradient(90deg,rgba(255,209,102,0.16),rgba(255,255,255,0.05));border-color:rgba(255,209,102,0.35);}
+.lb-rank{width:30px;text-align:center;font-weight:bold;font-size:13px;}
+.lb-name{flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lb-stats{font-size:10.5px;color:var(--text-dim,#ccc);white-space:nowrap;}
+
+/* ================= GAME SCREEN ================= */
+#screen-game{}
+#header{width:100%;padding:10px 12px;display:flex;flex-direction:column;gap:6px;z-index:10;}
+.top-bar{display:flex;justify-content:space-between;align-items:center;width:100%;gap:6px;}
+.stat-box{display:flex;align-items:center;gap:5px;padding:6px 9px;font-size:11px;font-weight:bold;border-radius:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.08);}
+.icon-btn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;width:32px;height:32px;border-radius:9px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.progress-container{width:100%;height:16px;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.12);position:relative;border-radius:8px;overflow:hidden;}
+.progress-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--emerald),#1f9e4c);transition:width 0.3s ease;box-shadow:0 0 10px rgba(61,220,115,0.6);}
+.progress-text{position:absolute;width:100%;height:100%;top:0;left:0;display:flex;justify-content:center;align-items:center;font-size:9.5px;text-shadow:1px 1px #000;font-weight:bold;}
+.biome-label{font-size:9.5px;text-align:center;letter-spacing:2px;color:var(--gold);opacity:0.85;}
+.objective-chip{font-size:10.5px;text-align:center;letter-spacing:0.5px;color:var(--text-light);background:rgba(0,0,0,0.35);border:1px solid rgba(255,209,102,0.25);border-radius:8px;padding:4px 8px;margin-top:2px;font-weight:700;}
+
+#canvas-container{position:relative;flex:1;width:100%;display:flex;justify-content:center;align-items:center;transition:background 0.6s ease;}
+canvas{display:block;touch-action:none;}
+
+#bottom-bar{width:100%;padding:10px;display:flex;justify-content:space-around;align-items:center;background:rgba(0,0,0,0.45);z-index:10;border-top:1px solid rgba(255,255,255,0.06);}
+.booster-btn{position:relative;width:50px;height:50px;display:flex;flex-direction:column;justify-content:center;align-items:center;font-size:8.5px;padding:2px;
+  border-radius:12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:#fff;cursor:pointer;gap:1px;
+}
+.booster-btn canvas{width:22px;height:22px;}
+.booster-btn span{font-size:20px;}
+.booster-count{position:absolute;top:-5px;right:-5px;background:var(--danger);color:white;border:2px solid #1a1030;border-radius:50%;width:18px;height:18px;font-size:10px;display:flex;justify-content:center;align-items:center;font-weight:bold;}
+.booster-btn.active{border-color:var(--gold);box-shadow:0 0 12px rgba(255,209,102,0.7);}
+
+/* ================= OVERLAYS ================= */
+.overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(4,2,14,0.82);display:flex;justify-content:center;align-items:center;z-index:100;opacity:0;pointer-events:none;transition:opacity 0.25s ease;}
+.overlay.active{opacity:1;pointer-events:auto;}
+.modal{width:86%;max-width:360px;padding:24px 22px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;border-radius:24px;}
+.modal h2{font-family:var(--font-display);font-size:19px;color:var(--gold);text-shadow:0 0 14px rgba(255,209,102,0.5);letter-spacing:1px;}
+.modal p{font-size:12px;line-height:1.5;color:var(--text-dim);}
+.modal .stars-row{font-size:26px;letter-spacing:6px;}
+
+#overlay-inventory .modal{max-width:380px;}
+.inv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-height:320px;overflow-y:auto;}
+.inv-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);cursor:pointer;}
+.inv-item .inv-icon{font-size:24px;}
+.inv-item .inv-name{font-size:9px;text-align:center;font-weight:700;}
+.inv-item .inv-count{font-size:10px;color:var(--gold);}
+.inv-item.disabled{opacity:0.35;pointer-events:none;}
+
+#achievement-badge{font-size:64px;filter:drop-shadow(0 0 22px rgba(255,209,102,0.7));}
+
+/* Toast */
+#toast{position:absolute;top:14%;left:50%;transform:translateX(-50%) translateY(-20px);background:rgba(10,6,26,0.92);border:1px solid var(--panel-border);color:#fff;padding:10px 18px;font-size:12px;pointer-events:none;opacity:0;transition:all 0.3s ease;z-index:200;text-align:center;white-space:nowrap;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.5);}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div id="game-container">
+
+  <!-- ============ MAIN MENU ============ -->
+  <div id="screen-menu" class="screen">
+    <div class="orb" style="width:180px;height:180px;background:#7d5fff;top:-40px;left:-40px;"></div>
+    <div class="orb" style="width:200px;height:200px;background:#3ddc73;bottom:60px;right:-60px;animation-delay:2s;"></div>
+    <div class="orb" style="width:140px;height:140px;background:#ffd166;bottom:-40px;left:20px;animation-delay:4s;"></div>
+    <div class="stars-layer"></div>
+
+    <div class="menu-top-stats">
+      <div class="chip">🪙 <span id="menu-coins">0</span></div>
+      <div class="chip">👑 LV <span id="menu-level">1</span></div>
+    </div>
+
+    <div class="menu-mid">
+      <div class="menu-crown">👑</div>
+      <div class="menu-logo">KINGDOM<span>CRUSH</span></div>
+      <div class="menu-sub">MINECRAFT MATCH-3 EDITION</div>
+    </div>
+
+    <div class="menu-buttons">
+      <button class="btn-glow" id="btn-menu-play">▶ PLAY</button>
+      <button class="btn-glow secondary" id="btn-menu-shop">🛒 SHOP</button>
+      <button class="btn-glow secondary" id="btn-menu-leaderboard">🏆 GLOBAL LEADERBOARD</button>
+      <button class="btn-glow secondary" id="btn-menu-settings">⚙ SETTINGS</button>
+      <button class="btn-glow green" id="btn-menu-subscribe">▶ SUBSCRIBE</button>
+    </div>
+
+    <div class="menu-footer">A KINGDOM ORIGINAL &nbsp;·&nbsp; @ARNAV_KINGDOM</div>
+  </div>
+
+  <!-- ============ LEVEL MAP ============ -->
+  <div id="screen-levelmap" class="screen">
+    <div class="levelmap-topbar">
+      <div class="screen-header" style="padding:0;">
+        <button class="btn-back" id="btn-map-back">←</button>
+        <h2>LEVEL MAP</h2>
+      </div>
+      <div class="levelmap-toprow">
+        <div class="chip">🪙 <span id="map-coins">0</span></div>
+        <button class="btn-glow green sm" id="btn-map-continue" style="width:auto;flex:1;margin-left:10px;">CONTINUE ▶ LV <span id="map-continue-lv">1</span></button>
+      </div>
+    </div>
+    <div id="levelmap-list"></div>
+  </div>
+
+  <!-- ============ SHOP ============ -->
+  <div id="screen-shop" class="screen">
+    <div class="screen-header">
+      <button class="btn-back" id="btn-shop-back">←</button>
+      <h2>ITEM SHOP</h2>
+    </div>
+    <div style="display:flex;justify-content:center;padding-bottom:8px;">
+      <div class="chip">🪙 <span id="shop-coins">0</span></div>
+    </div>
+    <div class="shop-tabs">
+      <div class="shop-tab active" id="tab-boost">BOOSTERS &amp; POWER-UPS</div>
+      <div class="shop-tab" id="tab-cosmetic">✨ AURAS</div>
+    </div>
+    <div class="shop-list" id="shop-list"></div>
+  </div>
+
+  <!-- ============ SETTINGS ============ -->
+  <div id="screen-settings" class="screen">
+    <div class="screen-header">
+      <button class="btn-back" id="btn-settings-back">←</button>
+      <h2>SETTINGS</h2>
+    </div>
+    <div class="settings-list">
+      <button class="btn-glow secondary" id="btn-sound-toggle">🔊 SOUND: ON</button>
+      <button class="btn-glow secondary" id="btn-settings-change-name">🏆 CHANGE LEADERBOARD NAME</button>
+      <button class="btn-glow green" id="btn-settings-subscribe">▶ SUBSCRIBE ON YOUTUBE</button>
+      <button class="btn-glow danger" id="btn-reset-progress">RESET PROGRESS</button>
+      <div style="flex:1;"></div>
+      <div class="menu-footer">KINGDOM CRUSH &nbsp;·&nbsp; v2.0 PREMIUM</div>
+    </div>
+  </div>
+
+  <!-- ============ GLOBAL LEADERBOARD ============ -->
+  <div id="screen-leaderboard" class="screen">
+    <div class="screen-header">
+      <button class="btn-back" id="btn-lb-back">←</button>
+      <h2>🏆 LEADERBOARD</h2>
+    </div>
+    <div class="lb-toprow">
+      <div class="chip" id="leaderboard-my-name">You: (no name set)</div>
+      <button class="btn-glow secondary sm" id="btn-lb-set-name" style="width:auto;">SET NAME</button>
+      <button class="icon-btn" id="btn-lb-refresh">🔄</button>
+    </div>
+    <div id="leaderboard-state"></div>
+    <div id="leaderboard-list"></div>
+  </div>
+
+  <!-- ============ GAME SCREEN ============ -->
+  #screen-game{}
+#{width:100%;padding:10px 12px;display:flex;flex-direction:column;gap:6px;z-index:10;}
+.top-bar{display:flex;justify-content:space-between;align-items:center;width:100%;gap:6px;}
+.stat-box{display:flex;align-items:center;gap:5px;padding:6px 9px;font-size:11px;font-weight:bold;border-radius:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.08);}
+.icon-btn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;width:32px;height:32px;border-radius:9px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.progress-container{width:100%;height:16px;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.12);position:relative;border-radius:8px;overflow:hidden;}
+.progress-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--emerald),#1f9e4c);transition:width 0.3s ease;box-shadow:0 0 10px rgba(61,220,115,0.6);}
+.progress-text{position:absolute;width:100%;height:100%;top:0;left:0;display:flex;justify-content:center;align-items:center;font-size:9.5px;text-shadow:1px 1px #000;font-weight:bold;}
+.biome-label{font-size:9.5px;text-align:center;letter-spacing:2px;color:var(--gold);opacity:0.85;}
+.objective-chip{font-size:10.5px;text-align:center;letter-spacing:0.5px;color:var(--text-light);background:rgba(0,0,0,0.35);border:1px solid rgba(255,209,102,0.25);border-radius:8px;padding:4px 8px;margin-top:2px;font-weight:700;}
+
+#canvas-container{position:relative;flex:1;width:100%;display:flex;justify-content:center;align-items:center;transition:background 0.6s ease;}
+canvas{display:block;touch-action:none;}
+
+#bottom-bar{width:100%;padding:10px;display:flex;justify-content:space-around;align-items:center;background:rgba(0,0,0,0.45);z-index:10;border-top:1px solid rgba(255,255,255,0.06);}
+.booster-btn{position:relative;width:50px;height:50px;display:flex;flex-direction:column;justify-content:center;align-items:center;font-size:8.5px;padding:2px;
+  border-radius:12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:#fff;cursor:pointer;gap:1px;
+}
+.booster-btn canvas{width:22px;height:22px;}
+.booster-btn span{font-size:20px;}
+.booster-count{position:absolute;top:-5px;right:-5px;background:var(--danger);color:white;border:2px solid #1a1030;border-radius:50%;width:18px;height:18px;font-size:10px;display:flex;justify-content:center;align-items:center;font-weight:bold;}
+.booster-btn.active{border-color:var(--gold);box-shadow:0 0 12px rgba(255,209,102,0.7);}
+
+/* ================= OVERLAYS ================= */
+.overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(4,2,14,0.82);display:flex;justify-content:center;align-items:center;z-index:100;opacity:0;pointer-events:none;transition:opacity 0.25s ease;}
+.overlay.active{opacity:1;pointer-events:auto;}
+.modal{width:86%;max-width:360px;padding:24px 22px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;border-radius:24px;}
+.modal h2{font-family:var(--font-display);font-size:19px;color:var(--gold);text-shadow:0 0 14px rgba(255,209,102,0.5);letter-spacing:1px;}
+.modal p{font-size:12px;line-height:1.5;color:var(--text-dim);}
+.modal .stars-row{font-size:26px;letter-spacing:6px;}
+
+#overlay-inventory .modal{max-width:380px;}
+.inv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-height:320px;overflow-y:auto;}
+.inv-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);cursor:pointer;}
+.inv-item .inv-icon{font-size:24px;}
+.inv-item .inv-name{font-size:9px;text-align:center;font-weight:700;}
+.inv-item .inv-count{font-size:10px;color:var(--gold);}
+.inv-item.disabled{opacity:0.35;pointer-events:none;}
+
+#achievement-badge{font-size:64px;filter:drop-shadow(0 0 22px rgba(255,209,102,0.7));}
+
+/* Toast */
+#toast{position:absolute;top:14%;left:50%;transform:translateX(-50%) translateY(-20px);background:rgba(10,6,26,0.92);border:1px solid var(--panel-border);color:#fff;padding:10px 18px;font-size:12px;pointer-events:none;opacity:0;transition:all 0.3s ease;z-index:200;text-align:center;white-space:nowrap;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.5);}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div id="game-container">
+
+  <!-- ============ MAIN MENU ============ -->
+  <div id="screen-menu" class="screen">
+    <div class="orb" style="width:180px;height:180px;background:#7d5fff;top:-40px;left:-40px;"></div>
+    <div class="orb" style="width:200px;height:200px;background:#3ddc73;bottom:60px;right:-60px;animation-delay:2s;"></div>
+    <div class="orb" style="width:140px;height:140px;background:#ffd166;bottom:-40px;left:20px;animation-delay:4s;"></div>
+    <div class="stars-layer"></div>
+
+    <div class="menu-top-stats">
+      <div class="chip">🪙 <span id="menu-coins">0</span></div>
+      <div class="chip">👑 LV <span id="menu-level">1</span></div>
+    </div>
+
+    <div class="menu-mid">
+      <div class="menu-crown">👑</div>
+      <div class="menu-logo">KINGDOM<span>CRUSH</span></div>
+      <div class="menu-sub">MINECRAFT MATCH-3 EDITION</div>
+    </div>
+
+    <div class="menu-buttons">
+      <button class="btn-glow" id="btn-menu-play">▶ PLAY</button>
+      <button class="btn-glow secondary" id="btn-menu-shop">🛒 SHOP</button>
+      <button class="btn-glow secondary" id="btn-menu-leaderboard">🏆 GLOBAL LEADERBOARD</button>
+      <button class="btn-glow secondary" id="btn-menu-settings">⚙ SETTINGS</button>
+      <button class="btn-glow green" id="btn-menu-subscribe">▶ SUBSCRIBE</button>
+    </div>
+
+    <div class="menu-footer">A KINGDOM ORIGINAL &nbsp;·&nbsp; @ARNAV_KINGDOM</div>
+  </div>
+
+  <!-- ============ LEVEL MAP ============ -->
+  <div id="screen-levelmap" class="screen">
+    <div class="levelmap-topbar">
+      <div class="screen-header" style="padding:0;">
+        <button class="btn-back" id="btn-map-back">←</button>
+        <h2>LEVEL MAP</h2>
+      </div>
+      <div class="levelmap-toprow">
+        <div class="chip">🪙 <span id="map-coins">0</span></div>
+        <button class="btn-glow green sm" id="btn-map-continue" style="width:auto;flex:1;margin-left:10px;">CONTINUE ▶ LV <span id="map-continue-lv">1</span></button>
+      </div>
+    </div>
+    <div id="levelmap-list"></div>
+  </div>
+
+  <!-- ============ SHOP ============ -->
+  <div id="screen-shop" class="screen">
+    <div class="screen-header">
+      <button class="btn-back" id="btn-shop-back">←</button>
+      <h2>ITEM SHOP</h2>
+    </div>
+    <div style="display:flex;justify-content:center;padding-bottom:8px;">
+      <div class="chip">🪙 <span id="shop-coins">0</span></div>
+    </div>
+    <div class="shop-tabs">
+      <div class="shop-tab active" id="tab-boost">BOOSTERS &amp; POWER-UPS</div>
+      <div class="shop-tab" id="tab-cosmetic">✨ AURAS</div>
+    </div>
+    <div class="shop-list" id="shop-list"></div>
+  </div>
+
+  <!-- ============ SETTINGS ============ -->
+  <div id="screen-settings" class="screen">
+    <div class="screen-header">
+      <button class="btn-back" id="btn-settings-back">←</button>
+      <h2>SETTINGS</h2>
+    </div>
+    <div class="settings-list">
+      <button class="btn-glow secondary" id="btn-sound-toggle">🔊 SOUND: ON</button>
+      <button class="btn-glow secondary" id="btn-settings-change-name">🏆 CHANGE LEADERBOARD NAME</button>
+      <button class="btn-glow green" id="btn-settings-subscribe">▶ SUBSCRIBE ON YOUTUBE</button>
+      <button class="btn-glow danger" id="btn-reset-progress">RESET PROGRESS</button>
+      <div style="flex:1;"></div>
+      <div class="menu-footer">KINGDOM CRUSH &nbsp;·&nbsp; v2.0 PREMIUM</div>
+    </div>
+  </div>
+
+  <!-- ============ GLOBAL LEADERBOARD ============ -->
+  <div id="screen-leaderboard" class="screen">
+    <div class="screen-header">
+      <button class="btn-back" id="btn-lb-back">←</button>
+      <h2>🏆 LEADERBOARD</h2>
+    </div>
+    <div class="lb-toprow">
+      <div class="chip" id="leaderboard-my-name">You: (no name set)</div>
+      <button class="btn-glow secondary sm" id="btn-lb-set-name" style="width:auto;">SET NAME</button>
+      <button class="icon-btn" id="btn-lb-refresh">🔄</button>
+    </div>
+    <div id="leaderboard-state"></div>
+    <div id="leaderboard-list"></div>
+  </div>
+
+  <!-- ============ GAME SCREEN ============ -->
+  <div id="screen-game" class="screen">
+    <div id="header">
+      <div class="top-bar">
+        <div class="stat-box">LVL&nbsp;<span id="ui-level" style="color:var(--emerald);">1</span></div>
+        <div class="stat-box">MOVES&nbsp;<span id="ui-moves" style="color:var(--gold);">25</span></div>
+        <div class="stat-box">🪙&nbsp;<span id="ui-coins" style="color:#ffff88;">100</span></div>
+        <button class="icon-btn" id="btn-pause">❚❚</button>
+      </div>
+      <div class="progress-container">
+        <div class="progress-bar" id="ui-progress"></div>
+        <div class="progress-text" id="ui-score-text">SCORE: 0 / 1000</div>
+      </div>
+      <div class="biome-label" id="ui-biome">PLAINS</div>
+      <div class="objective-chip" id="ui-objective">🎯 REACH THE TARGET SCORE</div>
+    </div>
+
+    <div id="canvas-container">
+      <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <div id="bottom-bar">
+      <button class="booster-btn" id="btn-booster-hammer">
+        <div class="booster-count" id="count-hammer">1</div>
+        <canvas id="icon-hammer"></canvas>
+        <span>Hammer</span>
+      </button>
+      <button class="booster-btn" id="btn-booster-shuffle">
+        <div class="booster-count" id="count-shuffle">1</div>
+        <canvas id="icon-shuffle"></canvas>
+        <span>Shuffle</span>
+      </button>
+      <button class="booster-btn" id="btn-booster-tnt">
+        <div class="booster-count" id="count-tnt">1</div>
+        <canvas id="icon-tnt"></canvas>
+        <span>TNT</span>
+      </button>
+      <button class="booster-btn" id="btn-bag">
+        <span>🎒</span>
+        <span>Bag</span>
+      </button>
+      <button class="booster-btn" id="btn-nav-shop">
+        <canvas id="icon-shop"></canvas>
+        <span>Shop</span>
+      </button>
+    </div>
+        </div>
+        
+  <!-- ============ OVERLAYS ============ -->
+  <div class="overlay" id="overlay-pause">
+    <div class="modal glass-panel">
+      <h2>PAUSED</h2>
+      <button class="btn-glow green" id="btn-resume">RESUME</button>
+      <button class="btn-glow secondary" id="btn-restart">RESTART LEVEL</button>
+      <button class="btn-glow secondary" id="btn-pause-map">LEVEL MAP</button>
+      <button class="btn-glow secondary" id="btn-pause-menu">MAIN MENU</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay-win">
+    <div class="modal glass-panel">
+      <h2>LEVEL COMPLETE!</h2>
+      <div class="stars-row" id="win-stars">⭐⭐⭐</div>
+      <p id="win-details">Score: 1200<br>Bonus Coins: +50</p>
+      <button class="btn-glow green" id="btn-next-level">NEXT LEVEL ▶</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay-lose">
+    <div class="modal glass-panel">
+      <h2 style="color:var(--danger);">OUT OF MOVES!</h2>
+      <p>You didn't reach the target score this time.</p>
+      <button class="btn-glow green" id="btn-watch-ad-revive" style="display:none;">🎬 WATCH AD: REVIVE +5 MOVES</button>
+      <button class="btn-glow" id="btn-buy-moves">+5 MOVES (100 🪙)</button>
+      <button class="btn-glow secondary" id="btn-retry">RETRY LEVEL</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay-achievement">
+    <div class="modal glass-panel">
+      <div id="achievement-badge">👑</div>
+      <h2 id="achievement-title">LEVEL 100 REACHED!</h2>
+      <p id="achievement-reward">+100 Bonus Coins Unlocked!</p>
+      <button class="btn-glow" id="btn-achievement-share">📤 SHARE ACHIEVEMENT</button>
+      <button class="btn-glow green" id="btn-achievement-continue">CONTINUE ▶</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay-inventory">
+    <div class="modal glass-panel">
+      <h2>BOOSTER BAG</h2>
+      <div class="inv-grid" id="inventory-list"></div>
+      <button class="btn-glow secondary" id="btn-close-inventory">CLOSE</button>
+    </div>
+  </div>
+
+  <div id="toast">Message Toast</div>
+</div>
+
+<!-- Firebase config for the Global Leaderboard, inlined directly (previously
+     loaded from an external firebase-config.js). Sets
+     window.KINGDOM_CRUSH_FIREBASE_CONFIG before the game's own <script>
+     block below. If this were ever removed or emptied, the game
+     automatically falls back to Offline leaderboard mode — gameplay is
+     never affected either way. See FIREBASE_SETUP.md for details. -->
+<script>
+window.KINGDOM_CRUSH_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyChtKpMFFQmiU8x_o0RcpcvvhIaLjM7hVg",
+  authDomain: "kingdom-crush.firebaseapp.com",
+  projectId: "kingdom-crush",
+  storageBucket: "kingdom-crush.firebasestorage.app",
+  messagingSenderId: "679757687691",
+  appId: "1:679757687691:web:095406d3fffc45a0d09d8e",
+  measurementId: "G-PGK0N33CMY"
+};
+</script>
+
+<script>
+/**
+ * KINGDOM CRUSH — PREMIUM EDITION
+ * Minecraft-inspired infinite Match-3 engine, pure vanilla JS / Canvas.
+ * Single-file, offline, no external assets or libraries.
+ */
+
+/* ===================== AUDIO SYSTEM ===================== */
+class AudioSystem {
+  constructor(){ this.ctx=null; this.enabled=true; }
+  init(){
+    if(!this.ctx){ const AC=window.AudioContext||window.webkitAudioContext; if(AC) this.ctx=new AC(); }
+    else if(this.ctx.state==='suspended'){ this.ctx.resume(); }
+  }
+  tone(type,f1,f2,dur,vol){
+    if(!this.enabled||!this.ctx) return;
+    const osc=this.ctx.createOscillator(), gain=this.ctx.createGain();
+    osc.type=type; osc.frequency.setValueAtTime(f1,this.ctx.currentTime);
+    if(f2) osc.frequency.exponentialRampToValueAtTime(f2,this.ctx.currentTime+dur*0.8);
+    gain.gain.setValueAtTime(vol,this.ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.001,this.ctx.currentTime+dur);
+    osc.connect(gain); gain.connect(this.ctx.destination);
+    osc.start(); osc.stop(this.ctx.currentTime+dur);
+  }
+  playSwap(){ this.tone('sine',300,600,0.1,0.2); }
+  playMatch(){
+    if(!this.enabled||!this.ctx) return;
+    const osc=this.ctx.createOscillator(), gain=this.ctx.createGain();
+    osc.type='triangle';
+    osc.frequency.setValueAtTime(523.25,this.ctx.currentTime);
+    osc.frequency.setValueAtTime(659.25,this.ctx.currentTime+0.08);
+    osc.frequency.setValueAtTime(783.99,this.ctx.currentTime+0.16);
+    gain.gain.setValueAtTime(0.3,this.ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.001,this.ctx.currentTime+0.3);
+    osc.connect(gain); gain.connect(this.ctx.destination);
+    osc.start(); osc.stop(this.ctx.currentTime+0.3);
+  }
+  playExplode(){ this.tone('sawtooth',120,30,0.3,0.5); }
+  playSpecial(){ this.tone('square',400,800,0.25,0.2); }
+  playWin(){
+    if(!this.enabled||!this.ctx) return;
+    [523.25,659.25,783.99,1046.5].forEach((f,i)=>{
+      const osc=this.ctx.createOscillator(), gain=this.ctx.createGain();
+      osc.type='triangle'; osc.frequency.setValueAtTime(f,this.ctx.currentTime+i*0.1);
+      gain.gain.setValueAtTime(0.25,this.ctx.currentTime+i*0.1);
+      gain.gain.linearRampToValueAtTime(0.001,this.ctx.currentTime+i*0.1+0.3);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(this.ctx.currentTime+i*0.1); osc.stop(this.ctx.currentTime+i*0.1+0.3);
+    });
+  }
+  /* ---------- UI POP/CLICK FEEDBACK ----------
+     Short (≈50-150ms), soft, premium click feedback for every tappable UI control.
+     Reuses the single shared AudioContext — never creates a new one per tap — and is
+     fully silent whenever sound is toggled OFF via the existing mute system. */
+  _pop(freq1,freq2,dur,vol){
+    if(!this.enabled||!this.ctx) return;
+    const now=this.ctx.currentTime;
+    const osc=this.ctx.createOscillator(), gain=this.ctx.createGain();
+    osc.type='sine';
+    osc.frequency.setValueAtTime(freq1,now);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(20,freq2),now+dur);
+    gain.gain.setValueAtTime(0.0001,now);
+    gain.gain.exponentialRampToValueAtTime(vol,now+0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0001,now+dur);
+    osc.connect(gain); gain.connect(this.ctx.destination);
+    osc.start(now); osc.stop(now+dur+0.02);
+  }
+  playPop(type='normal'){
+    if(!this.enabled||!this.ctx) return;
+    if(this.ctx.state==='suspended') this.ctx.resume();
+    switch(type){
+      case 'primary': this._pop(680,440,0.09,0.22); break;
+      case 'purchase':
+        this._pop(700,520,0.07,0.22);
+        setTimeout(()=>this._pop(1000,1300,0.09,0.16),70);
+        break;
+      case 'achievement':
+        this._pop(600,520,0.05,0.14);
+        setTimeout(()=>this._pop(820,1000,0.06,0.15),60);
+        setTimeout(()=>this._pop(1100,1320,0.09,0.17),130);
+        break;
+      case 'invalid': this._pop(220,150,0.09,0.12); break;
+      default: this._pop(560,380,0.06,0.16);
+    }
+  }
+}
+const audio = new AudioSystem();
+
+/* ===================== CONSTANTS ===================== */
+const BOARD_SIZE = 8;
+const BLOCK_TYPES = {
+  COAL:0, IRON:1, GOLD:2, REDSTONE:3, LAPIS:4, EMERALD:5, DIAMOND:6, AMETHYST:7,
+  TNT:10, CREEPER:11, LIGHTNING:12, RAINBOW:13,
+  STONE:20, ICE:21, OBSIDIAN:22, FENCE:23, COBWEB:24, VOID:25
+};
+/* Display metadata for the 8 plain collectible colors, used by "collect" objectives. */
+const COLLECTIBLE_META = {
+  0:{name:'Netherite', icon:'⬛'}, 1:{name:'Iron',   icon:'⚪'},
+  2:{name:'Gold',      icon:'🟡'}, 3:{name:'Redstone', icon:'🔴'},
+  4:{name:'Lapis',     icon:'🔵'}, 5:{name:'Emerald', icon:'🟢'},
+  6:{name:'Diamond',   icon:'💎'}, 7:{name:'Amethyst', icon:'🟣'}
+};
+
+/* ===================== BIOME SYSTEM ===================== */
+/* Each biome carries a "vibe" archetype used by spawnBiomeAmbient() to give it a real,
+   lightweight Minecraft-inspired environmental identity (not just a color swap):
+     grass  - Plains-style drifting grass/leaf flecks, gentle upward float + sway
+     petal  - soft floating petals with a wide side-to-side flutter
+     leaf   - forest canopy leaves, slow downward drift + sway
+     sand   - low, fast horizontal dust with a subtle heat-shimmer wobble
+     snow   - straight, slow downward snowfall
+     bubble - swamp gas bubbles, wobbly rise
+     spore  - mystical drifting motes (caves / end / ancient / mystic), slow glowing drift
+     drip   - occasional single droplet falling fast (dripstone)
+     ember  - nether-style embers/ash, quick upward flicker with glow pulse */
+const BIOMES = [
+  {name:'Plains',           sky:['#8ec5ff','#c9f2c7'], accent:'#7ed957', particle:'#ffffff', vibe:'grass'},
+  {name:'Cherry Grove',     sky:['#ffd1e8','#ff9ec9'], accent:'#ff6fae', particle:'#ffe3f1', vibe:'petal'},
+  {name:'Forest',           sky:['#123a20','#1e5631'], accent:'#3ddc73', particle:'#a8e6a1', vibe:'leaf'},
+  {name:'Desert',           sky:['#f7d488','#e8a33d'], accent:'#f4b942', particle:'#fff2c2', vibe:'sand'},
+  {name:'Snow',             sky:['#dff6ff','#a9d6e5'], accent:'#8fd3ff', particle:'#ffffff', vibe:'snow'},
+  {name:'Taiga',            sky:['#274156','#3a5a75'], accent:'#6fb3c9', particle:'#cdeaf5', vibe:'snow'},
+  {name:'Jungle',           sky:['#0e3d0e','#1c5e1c'], accent:'#4de04d', particle:'#baffba', vibe:'leaf'},
+  {name:'Swamp',            sky:['#2e3d24','#4b5e33'], accent:'#7a9a4a', particle:'#c7d99b', vibe:'bubble'},
+  {name:'Lush Cave',        sky:['#0a2e2e','#124f4f'], accent:'#2de0c2', particle:'#a0fff0', vibe:'spore'},
+  {name:'Dripstone Cave',   sky:['#3a2a1e','#5c4632'], accent:'#c9915a', particle:'#e8c39e', vibe:'drip'},
+  {name:'Badlands',         sky:['#8a3b1e','#c1602f'], accent:'#e08640', particle:'#ffd9a0', vibe:'sand'},
+  {name:'Deep Dark',        sky:['#07070f','#101025'], accent:'#3fdcc7', particle:'#0ff0d0', vibe:'spore'},
+  {name:'Nether',           sky:['#3a0a0a','#6e1414'], accent:'#ff4d3d', particle:'#ff9d70', vibe:'ember'},
+  {name:'Basalt Delta',     sky:['#2a2530','#4a4250'], accent:'#8a7fa0', particle:'#c9b8ff', vibe:'ember'},
+  {name:'Warped Forest',    sky:['#0a2a2a','#0f4a4a'], accent:'#2de0d0', particle:'#7dfff0', vibe:'spore'},
+  {name:'Crimson Forest',   sky:['#3a0a1a','#6e142f'], accent:'#ff3d6a', particle:'#ff9dbb', vibe:'ember'},
+  {name:'Soul Sand Valley', sky:['#0a2a3a','#153a4f'], accent:'#4dd9ff', particle:'#a0f0ff', vibe:'ember'},
+  {name:'The End',          sky:['#0d0a1e','#1a1030'], accent:'#c9a8ff', particle:'#e8d8ff', vibe:'spore'},
+  {name:'Ancient City',     sky:['#0a1a2a','#12283f'], accent:'#3fb0dc', particle:'#9de0f5', vibe:'spore'},
+  {name:'Mystic Kingdom',   sky:['#1a0a3a','#3a0f6e'], accent:'#ffd166', particle:'#ffe9a8', vibe:'spore'}
+];
+
+/* ===================== SHOP CATALOG ===================== */
+const SHOP_ITEMS = [
+  {id:'hammer',        name:'Hammer',                  icon:'🔨', desc:'Break any single block instantly.',            price:150, cat:'boost'},
+  {id:'shuffle',       name:'Shuffle Orb',              icon:'🔀', desc:'Reshuffle the board when stuck.',              price:100, cat:'boost'},
+  {id:'tnt',           name:'Instant TNT',              icon:'🧨', desc:'Place a TNT block — explodes in a 3x3 area.',  price:200, cat:'boost'},
+  {id:'megatnt',       name:'Mega TNT',                 icon:'💥', desc:'Massive 5x5 explosion blast.',                 price:400, cat:'boost'},
+  {id:'mace',          name:'Mace',                     icon:'⚒️', desc:'Smashes a 2x2 area of blocks.',                price:260, cat:'boost'},
+  {id:'enderpearl',    name:'Ender Pearl',              icon:'🌀', desc:'Teleport-swap any two blocks on the board.',   price:250, cat:'boost'},
+  {id:'trident',       name:'Trident',                  icon:'🔱', desc:'Clears an entire column instantly.',           price:300, cat:'boost'},
+  {id:'crossbow',      name:'Crossbow',                 icon:'🏹', desc:'Fires a cross-shaped blast.',                  price:220, cat:'boost'},
+  {id:'rainbowplace',  name:'Rainbow Block',            icon:'🌈', desc:'Place a Rainbow block — clears a whole color.', price:350, cat:'boost'},
+  {id:'extraMoves',    name:'Extra Moves',              icon:'➕', desc:'Instantly gain +5 moves.',                     price:120, cat:'boost', instant:true, adRewardable:true},
+  {id:'goldenApple',   name:'Golden Apple',             icon:'🍎', desc:'Instantly gain +3 moves.',                     price:90,  cat:'boost', instant:true},
+  {id:'enchantedApple',name:'Enchanted Golden Apple',   icon:'✨', desc:'+8 moves and 2x score for this level.',        price:280, cat:'boost', instant:true},
+  {id:'timeFreeze',    name:'Time Freeze',              icon:'⏳', desc:'Freeze the clock — +6 free moves.',            price:200, cat:'boost', instant:true},
+  {id:'doubleCoins',   name:'Double Coins',             icon:'🪙', desc:'Double coin rewards on your next win.',        price:180, cat:'boost', instant:true, adRewardable:true},
+  {id:'comboBooster',  name:'Combo Booster',            icon:'⚡', desc:'+50% score multiplier for this level.',        price:220, cat:'boost', instant:true},
+  {id:'luckyBlock',    name:'Lucky Block',              icon:'🎁', desc:'Open for a random coin reward.',               price:100, cat:'boost', instant:true},
+  {id:'mysteryChest',  name:'Mystery Chest',            icon:'🗝️', desc:'A surprise reward awaits...',                  price:150, cat:'boost', instant:true, adRewardable:true},
+  {id:'treasureCompass',name:'Treasure Compass',        icon:'🧭', desc:'Reveals a bonus stash of coins.',              price:130, cat:'boost', instant:true},
+  {id:'totem',         name:'Totem of Undying',         icon:'🗿', desc:'Auto-revives you once per level with +5 moves.', price:500, cat:'boost', passive:true},
+  {id:'beacon',        name:'Beacon Power',             icon:'🔷', desc:'Permanent +10% score from every match.',       price:600, cat:'boost', passive:true},
+  {id:'netherStar',    name:'Nether Star',              icon:'⭐', desc:'Permanent +20% coin rewards.',                 price:700, cat:'boost', passive:true},
+
+  /* AURA / THEME SYSTEM — replaces the old cosmetic catalog entirely.
+     Equipping an Aura is applied generically via apply:{type:'aura', value:<auraId>},
+     reusing the existing owned/cosmetics/equip machinery unchanged. Visual metadata
+     (colors, tier) lives in AURA_THEMES below and drives menu glow, ambient particles,
+     match/combo effects, board outline, and special-piece bursts everywhere in-game. */
+  {id:'auraWhite',     name:'White Aura',               icon:'⚪', desc:'Clean, subtle white particles and a soft board glow.',        price:300,   cat:'cosmetic', apply:{type:'aura', value:'auraWhite'}},
+  {id:'auraGrey',      name:'Grey Aura',                icon:'🌫️', desc:'Slightly stronger silver/grey particles and glow.',            price:800,   cat:'cosmetic', apply:{type:'aura', value:'auraGrey'}},
+  {id:'auraYellow',    name:'Yellow Aura',              icon:'🟡', desc:'Golden particles and a warmer board glow.',                    price:1800,  cat:'cosmetic', apply:{type:'aura', value:'auraYellow'}},
+  {id:'auraOrange',    name:'Orange Aura',              icon:'🟠', desc:'Stronger orange energy particles and outline.',                price:3500,  cat:'cosmetic', apply:{type:'aura', value:'auraOrange'}},
+  {id:'auraRed',       name:'Red Aura',                 icon:'🔴', desc:'Powerful red particles and stronger board energy.',            price:6500,  cat:'cosmetic', apply:{type:'aura', value:'auraRed'}},
+  {id:'auraLime',      name:'Lime Aura',                icon:'🍏', desc:'Bright lime-green energy particles.',                          price:11000, cat:'cosmetic', apply:{type:'aura', value:'auraLime'}},
+  {id:'auraDarkGreen', name:'Dark Green Aura',          icon:'🟢', desc:'Deep green magical particles.',                                price:18000, cat:'cosmetic', apply:{type:'aura', value:'auraDarkGreen'}},
+  {id:'auraAquaBlue',  name:'Aqua Blue Aura',           icon:'🔷', desc:'Aqua/blue energy effects across the board.',                   price:30000, cat:'cosmetic', apply:{type:'aura', value:'auraAquaBlue'}},
+  {id:'auraDarkBlue',  name:'Dark Blue Aura',           icon:'🔵', desc:'Deep blue, powerful particles and board glow.',                price:55000, cat:'cosmetic', apply:{type:'aura', value:'auraDarkBlue'}},
+  {id:'auraDualStorm', name:'Dual Storm Aura',          icon:'🌩️', desc:'THE ULTIMATE AURA — blue + red energy storms collide.',        price:100000,cat:'cosmetic', apply:{type:'aura', value:'auraDualStorm'}},
+];
+
+/* Visual metadata for each Aura, keyed by id. tier (1-10) scales intensity everywhere
+   the aura is applied (menu glow, ambient particle rate/size, board outline blur/width,
+   match/combo/special-piece tint bursts). `dual:true` renders a second interleaved
+   color pass (used only by the final Dual Storm Aura). */
+const AURA_THEMES = {
+  auraWhite:    {tier:1,  colors:['#ffffff']},
+  auraGrey:     {tier:2,  colors:['#c9c9d6','#e8e8f0']},
+  auraYellow:   {tier:3,  colors:['#ffe066','#fff3b0']},
+  auraOrange:   {tier:4,  colors:['#ff9d3d','#ffbf69']},
+  auraRed:      {tier:5,  colors:['#ff3d3d','#ff7a7a']},
+  auraLime:     {tier:6,  colors:['#a3ff3d','#d4ff9e']},
+  auraDarkGreen:{tier:7,  colors:['#1fa84a','#5fe083']},
+  auraAquaBlue: {tier:8,  colors:['#3ddce0','#8af0f2']},
+  auraDarkBlue: {tier:9,  colors:['#2d4de0','#6f8bff']},
+  auraDualStorm:{tier:10, colors:['#3d7bff','#ff3d3d'], dual:true},
+};
+
+const ACHIEVEMENT_MILESTONES = [100,500,1000,2500,5000,10000];
+
+/* Palette used for real-time (non-cached) special-piece rendering: [dark, mid, light] per collectible */
+const TYPE_PALETTE = {
+  [BLOCK_TYPES.COAL]:    ['#050505','#2b2b33','#8a8a9a'], // Netherite Ingot
+  [BLOCK_TYPES.IRON]:    ['#4a5058','#a8b4bd','#f4f9fc'], // Iron Ingot (cool silver/grey)
+  [BLOCK_TYPES.GOLD]:    ['#a9760a','#f4c430','#fff6c2'], // Gold Ingot
+  [BLOCK_TYPES.REDSTONE]:['#7a0d00','#c81400','#ff6a4d'], // Redstone Dust
+  [BLOCK_TYPES.LAPIS]:   ['#08205e','#2a5fd8','#bcd4ff'], // Lapis Gem
+  [BLOCK_TYPES.EMERALD]: ['#075c22','#26d666','#c6ffd8'], // Emerald Gem
+  [BLOCK_TYPES.DIAMOND]: ['#086868','#4fe8e8','#ecffff'], // Diamond Gem
+  [BLOCK_TYPES.AMETHYST]:['#481f66','#9a5cc6','#f0e0ff'], // Amethyst Shard
+};
+
+/* ===================== TEXTURE GENERATOR ===================== */
+const textureCache = {};
+function generateBlockTextures(){
+  const size=128;
+  const createTile=(drawFn)=>{ const cvs=document.createElement('canvas'); cvs.width=size; cvs.height=size; drawFn(cvs.getContext('2d'),size); return cvs; };
+
+  const roundRectPath=(ctx,x,y,w,h,rad)=>{ ctx.beginPath(); ctx.moveTo(x+rad,y); ctx.arcTo(x+w,y,x+w,y+h,rad); ctx.arcTo(x+w,y+h,x,y+h,rad); ctx.arcTo(x,y+h,x,y,rad); ctx.arcTo(x,y,x+w,y,rad); ctx.closePath(); };
+
+  const drawSlot=(ctx,sz,accent)=>{
+    const pad=sz*0.045, rad=sz*0.16;
+    const grad=ctx.createLinearGradient(0,0,0,sz);
+    grad.addColorStop(0,'rgba(255,255,255,0.10)'); grad.addColorStop(0.5,'rgba(20,16,36,0.5)'); grad.addColorStop(1,'rgba(6,4,14,0.68)');
+    ctx.fillStyle=grad; roundRectPath(ctx,pad,pad,sz-pad*2,sz-pad*2,rad); ctx.fill();
+    ctx.strokeStyle=accent+'66'; ctx.lineWidth=sz*0.018; roundRectPath(ctx,pad,pad,sz-pad*2,sz-pad*2,rad); ctx.stroke();
+  };
+  /* Premium readable outline used on top of every collectible: a soft dark halo for
+     small-screen separation from the board, plus a crisp accent-colored rim — never
+     a flat cheap black border. */
+  const drawPremiumOutline=(ctx,sz,accent)=>{
+    const pad=sz*0.045, rad=sz*0.16;
+    ctx.save();
+    ctx.shadowColor='rgba(0,0,0,0.55)'; ctx.shadowBlur=sz*0.05;
+    ctx.strokeStyle='rgba(0,0,0,0.55)'; ctx.lineWidth=sz*0.03;
+    roundRectPath(ctx,pad,pad,sz-pad*2,sz-pad*2,rad); ctx.stroke();
+    ctx.shadowBlur=0;
+    ctx.strokeStyle=accent+'aa'; ctx.lineWidth=sz*0.012;
+    roundRectPath(ctx,pad*1.6,pad*1.6,sz-pad*3.2,sz-pad*3.2,rad*0.85); ctx.stroke();
+    ctx.restore();
+  };
+  const drawShadow=(ctx,sz)=>{
+    ctx.save(); ctx.globalAlpha=0.32; ctx.fillStyle='#000';
+    ctx.beginPath(); ctx.ellipse(sz/2,sz*0.82,sz*0.27,sz*0.065,0,0,Math.PI*2); ctx.fill(); ctx.restore();
+  };
+  const drawIngot=(ctx,sz,dark,mid,light)=>{
+    drawShadow(ctx,sz);
+    const cx=sz/2,cy=sz*0.50,rW=sz*0.30,rH=sz*0.30;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx,cy-rH); ctx.lineTo(cx+rW,cy-rH*0.15); ctx.lineTo(cx+rW*0.62,cy+rH); ctx.lineTo(cx-rW*0.62,cy+rH); ctx.lineTo(cx-rW,cy-rH*0.15); ctx.closePath();
+    ctx.save(); ctx.shadowColor=light; ctx.shadowBlur=sz*0.18;
+    const grad=ctx.createRadialGradient(cx-rW*0.3,cy-rH*0.5,rW*0.1,cx,cy,rW*1.3);
+    grad.addColorStop(0,light); grad.addColorStop(0.5,mid); grad.addColorStop(1,dark);
+    ctx.fillStyle=grad; ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle=dark; ctx.lineWidth=sz*0.018; ctx.stroke();
+    ctx.strokeStyle='rgba(0,0,0,0.35)'; ctx.lineWidth=sz*0.007; ctx.stroke();
+    ctx.save(); ctx.clip();
+    /* darker facet shading for depth */
+    ctx.fillStyle='rgba(0,0,0,0.22)';
+    ctx.beginPath(); ctx.moveTo(cx,cy-rH); ctx.lineTo(cx+rW,cy-rH*0.15); ctx.lineTo(cx+rW*0.62,cy+rH); ctx.lineTo(cx,cy+rH*0.4); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.lineWidth=sz*0.01;
+    ctx.beginPath(); ctx.moveTo(cx,cy-rH); ctx.lineTo(cx,cy+rH*0.4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx-rW,cy-rH*0.15); ctx.lineTo(cx,cy+rH*0.4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx+rW,cy-rH*0.15); ctx.lineTo(cx,cy+rH*0.4); ctx.stroke();
+    /* bright gloss highlight */
+    ctx.fillStyle='rgba(255,255,255,0.75)';
+    ctx.beginPath(); ctx.ellipse(cx-rW*0.32,cy-rH*0.4,rW*0.22,rH*0.13,-0.5,0,Math.PI*2); ctx.fill();
+    ctx.restore(); ctx.restore();
+  };
+  const drawDust=(ctx,sz,color,glow)=>{
+    drawShadow(ctx,sz);
+    ctx.save();
+    const cx=sz/2,cy=sz*0.52,s=sz/64;
+    const glowGrad=ctx.createRadialGradient(cx,cy,2,cx,cy,sz*0.35);
+    glowGrad.addColorStop(0,glow); glowGrad.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=glowGrad; ctx.beginPath(); ctx.arc(cx,cy,sz*0.35,0,Math.PI*2); ctx.fill();
+    const seeds=[[0,0],[-14,-8],[14,-6],[-8,12],[10,14],[-16,6],[16,10],[0,-16],[-4,4],[6,-2]];
+    seeds.forEach(([dx,dy],i)=>{
+      const px=cx+dx*s, py=cy+dy*s, rad=(i%3===0?5:3)*s;
+      const g=ctx.createRadialGradient(px-rad*0.3,py-rad*0.3,0.5,px,py,rad);
+      g.addColorStop(0,'#ffffff'); g.addColorStop(0.3,glow); g.addColorStop(1,color);
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(px,py,rad,0,Math.PI*2); ctx.fill();
+    });
+    ctx.restore();
+  };
+  const drawBaseStone=(ctx,sz,baseCol,darkCol,lightCol)=>{
+    const s=sz/64;
+    ctx.fillStyle=baseCol; ctx.fillRect(0,0,sz,sz);
+    ctx.fillStyle=lightCol; ctx.fillRect(0,0,sz,4*s); ctx.fillRect(0,0,4*s,sz);
+    ctx.fillStyle=darkCol; ctx.fillRect(0,sz-4*s,sz,4*s); ctx.fillRect(sz-4*s,0,4*s,sz);
+    for(let i=0;i<40;i++){ ctx.fillStyle=Math.random()>0.5?darkCol:lightCol; const rx=Math.floor(Math.random()*(sz-8*s))+4*s, ry=Math.floor(Math.random()*(sz-8*s))+4*s; ctx.fillRect(rx,ry,6*s,6*s); }
+  };
+
+  /* --- Premium collectibles (replacing plain ores) --- */
+  textureCache[BLOCK_TYPES.COAL]=createTile((ctx,sz)=>{ drawSlot(ctx,sz,'#8a7fa0'); drawIngot(ctx,sz,'#0a0a0a','#2b2b33','#6a6a78'); drawPremiumOutline(ctx,sz,'#c9b8ff'); });      // Netherite Ingot
+  textureCache[BLOCK_TYPES.IRON]=createTile((ctx,sz)=>{ drawSlot(ctx,sz,'#c3ccd4'); drawIngot(ctx,sz,'#4a5058','#a8b4bd','#f4f9fc'); drawPremiumOutline(ctx,sz,'#dbe3e8'); });      // Iron Ingot (cool silver/grey)
+  textureCache[BLOCK_TYPES.GOLD]=createTile((ctx,sz)=>{ drawSlot(ctx,sz,'#fcee4b'); drawIngot(ctx,sz,'#a9760a','#f4c430','#fff6c2'); drawPremiumOutline(ctx,sz,'#ffe9a8'); });      // Gold Ingot
+  textureCache[BLOCK_TYPES.REDSTONE]=createTile((ctx,sz)=>{ drawSlot(ctx,sz,'#ff2200'); drawDust(ctx,sz,'#c81400','#ff5533'); drawPremiumOutline(ctx,sz,'#ff8a70'); });             // Redstone Dust
+  textureCache[BLOCK_TYPES.LAPIS]=createTile((ctx,sz)=>{ drawSlot(ctx,sz,'#1044ab'); drawGem(ctx,sz,'#0a2a80','#2a5fd8','#aecbff'); drawPremiumOutline(ctx,sz,'#bcd4ff'); });       // Lapis Gem
+  textureCache[BLOCK_TYPES.EMERALD]=createTile((ctx,sz)=>{ drawSlot(ctx,sz,'#00d542'); drawGem(ctx,sz,'#0a7a2c','#26d666','#bdffd0'); drawPremiumOutline(ctx,sz,'#c6ffd8'); });     // Emerald Gem
+  textureCache[BLOCK_TYPES.DIAMOND]=createTile((ctx,sz)=>{ drawSlot(ctx,sz,'#2cd8d8'); drawGem(ctx,sz,'#0a8a8a','#4fe8e8','#e3ffff'); drawPremiumOutline(ctx,sz,'#ecffff'); });     // Diamond Gem
+  textureCache[BLOCK_TYPES.AMETHYST]=createTile((ctx,sz)=>{ drawSlot(ctx,sz,'#9a5cc6'); drawGem(ctx,sz,'#5c2a80','#9a5cc6','#ecd8ff'); drawPremiumOutline(ctx,sz,'#f0e0ff'); });    // Amethyst Shard
+
+  /* --- Specials & obstacles --- */
+  textureCache[BLOCK_TYPES.TNT]=createTile((ctx,sz)=>{
+    drawSlot(ctx,sz,'#ff5b3d'); drawShadow(ctx,sz);
+    const pad=sz*0.1;
+    roundRectPath(ctx,pad,pad,sz-pad*2,sz-pad*2,sz*0.08);
+    const grad=ctx.createLinearGradient(0,pad,0,sz-pad); grad.addColorStop(0,'#ff6a4a'); grad.addColorStop(1,'#c8280f');
+    ctx.fillStyle=grad; ctx.fill();
+    ctx.fillStyle='#ffffff'; ctx.fillRect(pad,sz*0.42,sz-pad*2,sz*0.22);
+    ctx.fillStyle='#1a1a1a'; ctx.font=`bold ${Math.floor(sz*0.22)}px "Courier New",monospace`; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('TNT',sz/2,sz*0.53);
+    ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.fillRect(pad,pad,sz-pad*2,sz*0.05);
+  });
+  textureCache[BLOCK_TYPES.CREEPER]=createTile((ctx,sz)=>{
+    drawSlot(ctx,sz,'#55aa55'); drawShadow(ctx,sz);
+    const s=sz/64, pad=sz*0.12;
+    ctx.fillStyle='#5fbf5f'; roundRectPath(ctx,pad,pad,sz-pad*2,sz-pad*2,sz*0.06); ctx.fill();
+    ctx.fillStyle='#0d1a0d';
+    ctx.fillRect(20*s,22*s,10*s,10*s); ctx.fillRect(34*s,22*s,10*s,10*s); ctx.fillRect(26*s,32*s,12*s,16*s); ctx.fillRect(20*s,40*s,8*s,14*s); ctx.fillRect(36*s,40*s,8*s,14*s);
+    ctx.fillStyle='rgba(255,255,255,0.18)'; ctx.fillRect(pad,pad,sz-pad*2,sz*0.05);
+  });
+  textureCache[BLOCK_TYPES.LIGHTNING]=createTile((ctx,sz)=>{
+    drawSlot(ctx,sz,'#ffff55'); drawShadow(ctx,sz);
+    drawBaseStone(ctx,sz*0.78,'#3a3a55','#1a1a25','#6a6a85');
+    ctx.save(); ctx.translate(sz*0.11,sz*0.11);
+    const s=sz/64;
+    const grad=ctx.createLinearGradient(20*s,8*s,40*s,56*s); grad.addColorStop(0,'#fffb8a'); grad.addColorStop(1,'#ffd400');
+    ctx.fillStyle=grad;
+    ctx.beginPath(); ctx.moveTo(36*s,8*s); ctx.lineTo(20*s,32*s); ctx.lineTo(32*s,32*s); ctx.lineTo(24*s,56*s); ctx.lineTo(48*s,28*s); ctx.lineTo(34*s,28*s); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  });
+  textureCache[BLOCK_TYPES.RAINBOW]=createTile((ctx,sz)=>{
+    drawSlot(ctx,sz,'#ffffff'); drawShadow(ctx,sz);
+    const pad=sz*0.12;
+    roundRectPath(ctx,pad,pad,sz-pad*2,sz-pad*2,sz*0.5);
+    const grad=ctx.createLinearGradient(0,0,sz,sz);
+    grad.addColorStop(0,'#ff0000'); grad.addColorStop(0.2,'#ff7f00'); grad.addColorStop(0.4,'#ffff00'); grad.addColorStop(0.6,'#00ff00'); grad.addColorStop(0.8,'#0088ff'); grad.addColorStop(1,'#a000ff');
+    ctx.fillStyle=grad; ctx.fill();
+    ctx.strokeStyle='#ffffff'; ctx.lineWidth=sz*0.03; ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.beginPath(); ctx.ellipse(sz*0.38,sz*0.36,sz*0.14,sz*0.08,-0.6,0,Math.PI*2); ctx.fill();
+  });
+  textureCache[BLOCK_TYPES.STONE]=createTile((ctx,sz)=>drawBaseStone(ctx,sz,'#5a5a5a','#2a2a2a','#8a8a8a'));
+  textureCache[BLOCK_TYPES.ICE]=createTile((ctx,sz)=>{
+    const s=sz/64;
+    ctx.fillStyle='#a0d8ef'; ctx.fillRect(0,0,sz,sz);
+    ctx.fillStyle='#ffffff'; ctx.fillRect(8*s,8*s,16*s,4*s); ctx.fillRect(8*s,8*s,4*s,24*s); ctx.fillRect(36*s,32*s,20*s,4*s);
+    ctx.globalAlpha=0.5; ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,sz,sz); ctx.globalAlpha=1.0;
+  });
+  textureCache[BLOCK_TYPES.OBSIDIAN]=createTile((ctx,sz)=>drawBaseStone(ctx,sz,'#1a1126','#08040d','#322348'));
+
+  /* ---- Void cell: a permanently empty/unplayable board gap, used to carve the
+     board into non-rectangular shapes (cross, L, ring, split sections, etc). It is
+     rendered as a soft starry hole rather than a "block" so it visually reads as
+     absence-of-tile, not as another obstacle to break. Mechanically it reuses the
+     exact same permanent/obstacle plumbing as Obsidian (see isObstacle/isPermanent),
+     so every existing match/gravity/booster/jelly system already treats it safely. */
+  textureCache[BLOCK_TYPES.VOID]=createTile((ctx,sz)=>{
+    ctx.fillStyle='rgba(0,0,0,0)'; ctx.clearRect(0,0,sz,sz);
+    const pad=sz*0.08, rad=sz*0.18;
+    ctx.save();
+    const grad=ctx.createRadialGradient(sz/2,sz/2,sz*0.05,sz/2,sz/2,sz*0.5);
+    grad.addColorStop(0,'rgba(10,6,26,0.55)'); grad.addColorStop(1,'rgba(10,6,26,0.08)');
+    ctx.fillStyle=grad;
+    roundRectPath(ctx,pad,pad,sz-pad*2,sz-pad*2,rad); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=sz*0.012;
+    roundRectPath(ctx,pad,pad,sz-pad*2,sz-pad*2,rad); ctx.stroke();
+    const dots=[[0.3,0.35],[0.68,0.24],[0.5,0.6],[0.22,0.7],[0.78,0.68]];
+    dots.forEach(([dx,dy],i)=>{ ctx.fillStyle=`rgba(255,255,255,${0.15+0.1*(i%2)})`; ctx.beginPath(); ctx.arc(sz*dx,sz*dy,sz*0.012,0,Math.PI*2); ctx.fill(); });
+    ctx.restore();
+  });
+
+  /* ---- Wooden Fence: permanent/unbreakable obstacle ----
+     Minecraft-style fence — vertical planks with a woodgrain fill, crossbar rails,
+     dark outline, corner highlights and a soft drop shadow so it clearly reads as a
+     solid blocked cell rather than a collectible. */
+  textureCache[BLOCK_TYPES.FENCE]=createTile((ctx,sz)=>{
+    const s=sz/64;
+    drawShadow(ctx,sz);
+    // backdrop slot (dirt/ground tone so the fence reads as "planted" in the board)
+    ctx.fillStyle='#6b4a2b'; ctx.fillRect(0,0,sz,sz);
+    ctx.fillStyle='#5a3d24'; for(let i=0;i<14;i++){ const rx=Math.random()*sz, ry=Math.random()*sz; ctx.fillRect(rx,ry,3*s,3*s); }
+    // three vertical wooden posts
+    const postW=12*s, gap=(sz-postW*3)/4;
+    for(let i=0;i<3;i++){
+      const px=gap+i*(postW+gap);
+      const grad=ctx.createLinearGradient(px,0,px+postW,0);
+      grad.addColorStop(0,'#3e2712'); grad.addColorStop(0.15,'#8a5a2f'); grad.addColorStop(0.5,'#b9834a'); grad.addColorStop(0.85,'#8a5a2f'); grad.addColorStop(1,'#3e2712');
+      ctx.fillStyle=grad; ctx.fillRect(px,4*s,postW,sz-8*s);
+      ctx.strokeStyle='rgba(0,0,0,0.55)'; ctx.lineWidth=1.5*s; ctx.strokeRect(px,4*s,postW,sz-8*s);
+      // wood grain lines
+      ctx.strokeStyle='rgba(0,0,0,0.25)'; ctx.lineWidth=1*s;
+      for(let g=1;g<4;g++){ ctx.beginPath(); ctx.moveTo(px+2*s,6*s+g*12*s); ctx.lineTo(px+postW-2*s,6*s+g*12*s+2*s); ctx.stroke(); }
+      // highlight edge (3D bevel)
+      ctx.fillStyle='rgba(255,224,170,0.35)'; ctx.fillRect(px+1.5*s,4*s,2*s,sz-8*s);
+    }
+    // two horizontal cross-rails
+    [22*s,42*s].forEach(ry=>{
+      const grad=ctx.createLinearGradient(0,ry,0,ry+9*s);
+      grad.addColorStop(0,'#9a6a38'); grad.addColorStop(0.5,'#6e4726'); grad.addColorStop(1,'#3e2712');
+      ctx.fillStyle=grad; ctx.fillRect(2*s,ry,sz-4*s,9*s);
+      ctx.strokeStyle='rgba(0,0,0,0.6)'; ctx.lineWidth=1.5*s; ctx.strokeRect(2*s,ry,sz-4*s,9*s);
+      ctx.fillStyle='rgba(255,224,170,0.3)'; ctx.fillRect(2*s,ry+1*s,sz-4*s,1.5*s);
+    });
+    // outer outline so the obstacle silhouette is unmistakable
+    ctx.strokeStyle='rgba(0,0,0,0.7)'; ctx.lineWidth=2.5*s; ctx.strokeRect(1.5*s,1.5*s,sz-3*s,sz-3*s);
+    ctx.strokeStyle='rgba(255,200,120,0.25)'; ctx.lineWidth=1*s; ctx.strokeRect(3*s,3*s,sz-6*s,sz-6*s);
+  });
+
+  /* ---- Cobweb base texture (full health) ----
+     The live per-frame variant (with damage stages + subtle sway) is drawn in
+     drawTileVisual; this cached texture is the initial/fallback look. */
+  textureCache[BLOCK_TYPES.COBWEB]=createTile((ctx,sz)=>{ drawCobwebStrands(ctx,sz,0,2); });
+}
+
+/* Shared cobweb renderer — used for both the cached base texture and the live,
+   damage-aware draw in drawTileVisual. `wobble` adds a subtle animated sway;
+   `health` (2=full, 1=damaged) thins the strand layers as it takes hits. */
+function drawCobwebStrands(ctx,sz,wobble,health){
+  const s=sz/64;
+  ctx.save();
+  ctx.strokeStyle=`rgba(235,238,245,${0.55+0.15*health})`;
+  ctx.lineWidth=1.4*s;
+  const corners=[[6*s,6*s],[58*s,6*s],[6*s,58*s],[58*s,58*s]];
+  const cx=sz/2+wobble, cy=sz/2-wobble*0.5;
+  // radial strands from center to corners/edges
+  const anchors=[...corners,[cx,4*s],[cx,60*s],[4*s,cy],[60*s,cy]];
+  anchors.forEach(([ax,ay])=>{ ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(ax,ay); ctx.stroke(); });
+  // concentric "web" rings connecting the strands — fewer rings once damaged
+  const ringCount=health>=2?3:1;
+  for(let ring=1;ring<=ringCount;ring++){
+    const rad=ring*(sz*0.16);
+    ctx.beginPath();
+    for(let a=0;a<=8;a++){
+      const ang=(a/8)*Math.PI*2;
+      const px=cx+Math.cos(ang)*rad+Math.sin(ang*3+wobble*4)*1.5*s, py=cy+Math.sin(ang)*rad+Math.cos(ang*3+wobble*4)*1.5*s;
+      if(a===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.closePath();
+    ctx.strokeStyle=`rgba(210,215,228,${0.4+0.1*health})`;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawBoosterIcons(){
+  const renderToCanvas=(id,drawFn)=>{ const cvs=document.getElementById(id); if(!cvs) return; cvs.width=32; cvs.height=32; drawFn(cvs.getContext('2d'),32); };
+  renderToCanvas('icon-hammer',(ctx)=>{ ctx.fillStyle='#8b5a2b'; ctx.fillRect(6,20,6,10); ctx.fillStyle='#aaa'; ctx.fillRect(4,8,18,12); ctx.fillStyle='#fff'; ctx.fillRect(4,8,18,3); });
+  renderToCanvas('icon-shuffle',(ctx,sz)=>{
+    ctx.strokeStyle='#55ff55'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(sz/2,sz/2,10,0,Math.PI*1.5); ctx.stroke();
+    ctx.fillStyle='#55ff55'; ctx.beginPath(); ctx.moveTo(sz/2+10,sz/2-6); ctx.lineTo(sz/2+16,sz/2); ctx.lineTo(sz/2+4,sz/2); ctx.fill();
+  });
+  renderToCanvas('icon-tnt',(ctx,sz)=>{ ctx.drawImage(textureCache[BLOCK_TYPES.TNT],0,0,sz,sz); });
+  renderToCanvas('icon-shop',(ctx,sz)=>{
+    ctx.fillStyle='#ffaa00'; ctx.beginPath(); ctx.arc(sz/2,sz/2,12,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#000'; ctx.font='bold 14px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('$',sz/2,sz/2);
+  });
+}
+
+/* ===================== PARTICLES & TEXT ===================== */
+class Particle{
+  constructor(x,y,color){
+    this.x=x; this.y=y; this.vx=(Math.random()-0.5)*8; this.vy=(Math.random()-0.5)*8-2;
+    this.size=Math.random()*6+4; this.color=color; this.life=1.0; this.decay=Math.random()*0.03+0.02; this.gravity=0.2;
+  }
+  update(){ this.x+=this.vx; this.y+=this.vy; this.vy+=this.gravity; this.life-=this.decay; }
+  draw(ctx){ ctx.save(); ctx.globalAlpha=Math.max(0,this.life); ctx.fillStyle=this.color; ctx.fillRect(this.x-this.size/2,this.y-this.size/2,this.size,this.size); ctx.restore(); }
+}
+class FloatingText{
+  constructor(x,y,text,color='#ffffff',big=false){ this.x=x; this.y=y; this.text=text; this.color=color; this.life=1.0; this.vy=-2; this.big=big; this.pop=big?1.6:1.0; }
+  update(){ this.y+=this.vy; this.life-=0.025; this.pop+=(1.0-this.pop)*0.25; }
+  draw(ctx){
+    ctx.save(); ctx.globalAlpha=Math.max(0,this.life);
+    ctx.translate(this.x,this.y); ctx.scale(this.pop,this.pop);
+    const fontSize=this.big?24:18;
+    ctx.font=`bold ${fontSize}px "Courier New", monospace`;
+    if(this.big){ ctx.shadowColor=this.color; ctx.shadowBlur=12; }
+    ctx.fillStyle='#000'; ctx.fillText(this.text,2,2);
+    ctx.fillStyle=this.color; ctx.fillText(this.text,0,0);
+    ctx.restore();
+  }
+}
+class Shockwave{
+  constructor(x,y,color){ this.x=x; this.y=y; this.color=color; this.r=4; this.life=1.0; }
+  update(){ this.r+=3.2; this.life-=0.045; }
+  draw(ctx){
+    if(this.life<=0) return;
+    ctx.save(); ctx.globalAlpha=Math.max(0,this.life)*0.6;
+    ctx.strokeStyle=this.color; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+}
+
+/* ===================== MAIN GAME CLASS ===================== */
+class KingdomCrush{
+  constructor(){
+    this.canvas=document.getElementById('gameCanvas');
+    this.ctx=this.canvas.getContext('2d');
+
+    this.level=1; this.highestUnlocked=1; this.score=0; this.targetScore=1000; this.moves=25; this.coins=200; this.highScore=0;
+    this.boosters={hammer:1,shuffle:1,tnt:1};
+    this.owned={}; this.levelStars={}; this.achievements=[]; this.cosmetics={};
+    this.activeBooster=null; this.enderFirst=null;
+    this.scoreMultiplierTemp=1; this.doubleCoinsActive=false; this.totemUsedThisLevel=false;
+
+    this.board=[]; this.tileSize=0; this.offsetX=0; this.offsetY=0;
+    /* White Jelly / Gel overlay — a CELL-based layer (independent of which tile currently
+       occupies that cell), so it correctly persists through gravity/refill instead of
+       moving with a falling piece. jellyGrid[r][c] = hits remaining (0 = no jelly / cleared). */
+    this.jellyGrid=[];
+    this.selectedTile=null; this.isAnimating=false; this.inputLocked=false;
+    this.particles=[]; this.floatingTexts=[]; this.shockwaves=[]; this.cameraShake=0; this.ambientTimer=0;
+    this.rainbowFX=null;
+
+    this.currentScreen='menu'; this.lastScreen='menu'; this.shopTab='boost';
+    this.currentBiome=BIOMES[0];
+    this.lastTime=performance.now();
+
+    this.initEvents();
+  }
+
+  init(){
+    generateBlockTextures();
+    drawBoosterIcons();
+    this.loadSaveData();
+    this.resize();
+    window.addEventListener('resize',()=>this.resize());
+    if(window.AndroidBridge && AndroidBridge.showRewarded){
+      const revBtn=document.getElementById('btn-watch-ad-revive'); if(revBtn) revBtn.style.display='flex';
+    }
+    this.showScreen('menu');
+    requestAnimationFrame((t)=>this.loop(t));
+  }
+
+  /* ---------- Native ad reward callback (invoked by Android via evaluateJavascript) ---------- */
+  handleRewardedAd(type){
+    if(type==='revive'||type==='continue'){
+      this.moves+=5;
+      document.getElementById('overlay-lose').classList.remove('active');
+      this.updateUI();
+      this.showToast('Revived! +5 Moves');
+    } else if(type==='extraMoves'){
+      this.moves+=5; this.updateUI(); this.showToast('+5 Moves (Ad Reward)!');
+    } else if(type==='doubleCoins'){
+      this.doubleCoinsActive=true; this.showToast('Double Coins Active (Ad Reward)!');
+    } else if(type==='mysteryChest'){
+      const r=80+Math.floor(Math.random()*200); this.coins+=r; this.updateUI(); this.showToast(`Mystery Chest: +${r} coins (Ad Reward)!`);
+    }
+    this.saveData();
+  }
+
+  /* ---------- SAVE SYSTEM ----------
+     CRITICAL: "currentLevel" (this.level — the level the player is currently viewing
+     or playing) and "highestUnlockedLevel" (this.highestUnlocked — the highest level
+     ever permanently unlocked) are deliberately SEPARATE and must stay that way.
+     Selecting or replaying a lower level only ever changes this.level. Progress —
+     this.highestUnlocked — can only ever go up, via Math.max(), never down. */
+  loadSaveData(){
+    const raw=JSON.parse(localStorage.getItem('KINGDOM_CRUSH_SAVE')||'{}');
+    this.level=raw.level||1;
+    // Migration: older saves only ever stored "level" and used it as both the current
+    // level AND the unlock boundary. Treat that old value as a floor so nobody's
+    // progress is ever lost or reduced by this update. Always keep the HIGHEST valid
+    // value seen across every legacy/new field, and never let a lower one overwrite it.
+    const legacyLevel=raw.level||1;
+    const savedHighest=raw.highestUnlocked||0;
+    this.highestUnlocked=Math.max(savedHighest,legacyLevel,1);
+    this.coins=raw.coins!==undefined?raw.coins:200;
+    this.highScore=raw.highScore||0;
+    this.boosters=Object.assign({hammer:1,shuffle:1,tnt:1},raw.boosters||{});
+    this.owned=raw.owned||{};
+    this.levelStars=raw.levelStars||{};
+    this.achievements=raw.achievements||[];
+    this.cosmetics=raw.cosmetics||{};
+    this.displayName=raw.displayName||null;
+    audio.enabled = raw.soundOn!==undefined ? raw.soundOn : true;
+    this.updateUI();
+    this.applyCosmetics();
+  }
+  saveData(){
+    // Belt-and-suspenders: never persist a highestUnlocked lower than what's already
+    // on disk, even if something upstream mutated state unexpectedly.
+    try{
+      const existing=JSON.parse(localStorage.getItem('KINGDOM_CRUSH_SAVE')||'{}');
+      this.highestUnlocked=Math.max(this.highestUnlocked||1,existing.highestUnlocked||0,1);
+    }catch(e){}
+    localStorage.setItem('KINGDOM_CRUSH_SAVE', JSON.stringify({
+      level:this.level, highestUnlocked:this.highestUnlocked, coins:this.coins, highScore:Math.max(this.score,this.highScore),
+      boosters:this.boosters, owned:this.owned, levelStars:this.levelStars,
+      achievements:this.achievements, cosmetics:this.cosmetics, soundOn:audio.enabled, displayName:this.displayName
+    }));
+  }
+ace;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+*{box-sizing:border-box;user-select:none;-webkit-user-select:none;margin:0;padding:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;background:#050414;font-family:var(--font-body);color:var(--text-light);display:flex;justify-content:center;align-items:center;}
+
+#game-container{
+  position:relative;width:100%;max-width:480px;height:100%;max-height:900px;
+  background:linear-gradient(160deg,var(--blue-deep),var(--purple-deep) 60%,#08060f);
+  box-shadow:0 0 60px rgba(0,0,0,0.9), inset 0 0 120px rgba(0,0,0,0.5);
+  overflow:hidden;border-radius:0;
+}
+
+.screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;opacity:0;pointer-events:none;transform:translateY(10px) scale(0.99);transition:opacity .28s ease, transform .28s ease;}
+.screen.screen-active{opacity:1;pointer-events:auto;transform:translateY(0) scale(1);}
+
+/* ---------- Ambient background decor ---------- */
+.orb{position:absolute;border-radius:50%;filter:blur(40px);opacity:0.45;pointer-events:none;animation:floatOrb 12s ease-in-out infinite;}
+@keyframes floatOrb{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(14px,-22px) scale(1.08);}}
+.stars-layer{position:absolute;inset:0;pointer-events:none;
+  background-image:radial-gradient(1.5px 1.5px at 20% 30%, #fff8, transparent),
+                    radial-gradient(1.5px 1.5px at 70% 60%, #fff6, transparent),
+                    radial-gradient(1px 1px at 40% 80%, #fff5, transparent),
+                    radial-gradient(1.5px 1.5px at 85% 20%, #fff7, transparent),
+                    radial-gradient(1px 1px at 55% 45%, #fff4, transparent),
+                    radial-gradient(1.5px 1.5px at 10% 65%, #fff6, transparent);
+  animation:twinkle 4s ease-in-out infinite;
+}
+@keyframes twinkle{0%,100%{opacity:0.5;}50%{opacity:1;}}
+
+/* ---------- Buttons & panels ---------- */
+.btn-glow{
+  font-family:var(--font-display);font-weight:bold;font-size:16px;letter-spacing:1px;color:#2a1a06;
+  background:linear-gradient(180deg,#ffe9a8,var(--gold) 55%,var(--gold-dark));
+  border:none;border-radius:var(--radius-md);padding:14px 22px;cursor:pointer;
+  box-shadow:0 4px 0 #8a611c, 0 8px 18px rgba(255,209,102,0.35), inset 0 1px 0 rgba(255,255,255,0.6);
+  display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .08s ease, box-shadow .08s ease;
+  width:100%;
+}
+.btn-glow:active{transform:translateY(3px);box-shadow:0 1px 0 #8a611c, 0 3px 8px rgba(255,209,102,0.3), inset 0 1px 0 rgba(255,255,255,0.6);}
+.btn-glow.secondary{color:var(--text-light);background:linear-gradient(180deg,#3a2f66,#241a4a);box-shadow:0 4px 0 #150f30, 0 8px 16px rgba(120,90,220,0.25), inset 0 1px 0 rgba(255,255,255,0.12);}
+.btn-glow.secondary:active{box-shadow:0 1px 0 #150f30, 0 3px 8px rgba(120,90,220,0.2);}
+.btn-glow.danger{color:#fff;background:linear-gradient(180deg,#ff8d97,var(--danger) 60%,#c22e3c);box-shadow:0 4px 0 #7a1520, 0 8px 16px rgba(255,93,108,0.3);}
+.btn-glow.green{color:#0c2a10;background:linear-gradient(180deg,#a4f7bd,var(--emerald) 55%,#1f9e4c);box-shadow:0 4px 0 #0f5c26, 0 8px 16px rgba(61,220,115,0.3);}
+.btn-glow.sm{padding:10px 14px;font-size:12px;}
+.btn-glow:disabled{opacity:0.4;cursor:not-allowed;}
+
+.glass-panel{background:var(--panel-glass);border:1px solid var(--panel-border);border-radius:var(--radius-lg);backdrop-filter:blur(6px);}
+
+.chip{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.08);font-size:12px;font-weight:700;}
+
+.screen-header{display:flex;align-items:center;gap:10px;padding:14px 14px 8px;}
+.screen-header h2{font-family:var(--font-display);font-size:16px;letter-spacing:2px;color:var(--gold);text-shadow:0 0 12px rgba(255,209,102,0.5);flex:1;text-align:center;margin-right:34px;}
+.btn-back{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;width:34px;height:34px;border-radius:10px;font-size:16px;cursor:pointer;}
+
+/* ================= MENU ================= */
+#screen-menu{align-items:center;justify-content:space-between;padding:26px 22px 30px;position:relative;}
+.menu-top-stats{display:flex;gap:8px;width:100%;justify-content:center;}
+.menu-crown{font-size:54px;filter:drop-shadow(0 0 18px rgba(255,209,102,0.6));animation:bob 3s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+.menu-logo{font-family:var(--font-display);font-size:38px;font-weight:bold;text-align:center;line-height:1.15;letter-spacing:2px;
+  background:linear-gradient(180deg,#fff6d8,var(--gold) 55%,var(--gold-dark));-webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 0 30px rgba(255,209,102,0.35);
+}
+.menu-logo span{display:block;background:linear-gradient(180deg,#c9f7d6,var(--emerald) 55%,#1f9e4c);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.menu-sub{font-size:11px;letter-spacing:3px;color:var(--text-dim);text-align:center;margin-top:6px;}
+.menu-mid{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.menu-buttons{display:flex;flex-direction:column;gap:12px;width:100%;max-width:300px;}
+.menu-footer{font-size:10px;color:var(--text-dim);text-align:center;letter-spacing:1px;}
+
+/* ================= LEVEL MAP ================= */
+#screen-levelmap{background:linear-gradient(180deg,#0b1330,#150a30);}
+#levelmap-list{flex:1;overflow-y:auto;padding:20px 24px 100px;display:flex;flex-direction:column;gap:0;position:relative;}
+.level-node{display:flex;flex-direction:column;align-items:center;gap:4px;width:110px;margin:14px 0;position:relative;}
+.level-node.left{align-self:flex-start;margin-left:6px;}
+.level-node.right{align-self:flex-end;margin-right:6px;}
+.node-circle{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:20px;
+  background:radial-gradient(circle at 35% 30%, #fff2, transparent 60%), linear-gradient(180deg,var(--accent,#7ed957),#1c1c1c);
+  border:3px solid rgba(255,255,255,0.25);box-shadow:0 0 0 4px rgba(0,0,0,0.25), 0 6px 14px rgba(0,0,0,0.4);color:#0b0b0b;text-shadow:0 1px 0 rgba(255,255,255,0.3);
+}
+.level-node.locked .node-circle{background:linear-gradient(180deg,#3a3a44,#1c1c22);color:#777;border-color:rgba(255,255,255,0.08);box-shadow:none;filter:grayscale(0.6);}
+.level-node.current .node-circle{box-shadow:0 0 0 4px rgba(255,209,102,0.25), 0 0 24px rgba(255,209,102,0.6);animation:pulseNode 1.6s ease-in-out infinite;border-color:var(--gold);}
+@keyframes pulseNode{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+.node-stars{font-size:11px;letter-spacing:1px;color:var(--gold);height:12px;}
+.node-biome{font-size:9px;color:var(--text-dim);letter-spacing:0.5px;text-align:center;max-width:90px;}
+.levelmap-topbar{display:flex;flex-direction:column;gap:10px;padding:14px 16px;}
+.levelmap-toprow{display:flex;justify-content:space-between;align-items:center;}
+
+/* ================= SHOP ================= */
+#screen-shop{background:linear-gradient(180deg,#12102a,#1c1240);}
+.shop-tabs{display:flex;gap:8px;padding:0 16px 10px;}
+.shop-tab{flex:1;text-align:center;padding:10px;border-radius:12px;font-size:12px;font-weight:bold;letter-spacing:1px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:var(--text-dim);cursor:pointer;}
+.shop-tab.active{background:linear-gradient(180deg,#ffe9a8,var(--gold));color:#2a1a06;border-color:transparent;}
+.shop-list{flex:1;overflow-y:auto;padding:6px 14px 90px;display:flex;flex-direction:column;gap:10px;}
+.shop-item-card{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;background:rgba(255,255,255,0.045);border:1px solid rgba(255,255,255,0.08);}
+.shop-icon{width:46px;height:46px;min-width:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;
+  background:radial-gradient(circle at 35% 30%, rgba(255,255,255,0.25), transparent 60%), linear-gradient(160deg,#3a2f66,#1c1440);
+  box-shadow:0 0 14px rgba(140,110,255,0.35), inset 0 0 0 1px rgba(255,255,255,0.1);
+}
+.shop-info{flex:1;min-width:0;}
+.shop-name{font-size:12.5px;font-weight:700;}
+.owned-count{color:var(--gold);font-size:10px;margin-left:4px;}
+.shop-desc{font-size:10.5px;color:var(--text-dim);margin-top:2px;line-height:1.3;}
+.shop-buy-btn{font-family:var(--font-display);font-size:11px;font-weight:bold;padding:9px 12px;border-radius:10px;border:none;cursor:pointer;white-space:nowrap;
+  background:linear-gradient(180deg,#ffe9a8,var(--gold));color:#2a1a06;box-shadow:0 3px 0 #8a611c;min-width:76px;
+}
+.shop-buy-btn.equip{background:linear-gradient(180deg,#c9f7d6,var(--emerald));box-shadow:0 3px 0 #1f9e4c;color:#0c2a10;}
+.shop-buy-btn.equipped{background:linear-gradient(180deg,#555,#333);box-shadow:0 3px 0 #111;color:#bbb;}
+
+/* ================= SETTINGS ================= */
+.settings-list{flex:1;display:flex;flex-direction:column;gap:14px;padding:20px;}
+
+/* ================= LEADERBOARD ================= */
+.lb-toprow{display:flex;align-items:center;gap:8px;padding:0 14px 10px;}
+.lb-toprow .chip{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#leaderboard-state{padding:0 14px;}
+.lb-loading,.lb-empty{text-align:center;color:var(--text-dim,#aaa);font-size:12px;padding:20px 0;}
+.lb-offline{text-align:center;color:var(--gold);font-size:11px;background:rgba(255,209,102,0.1);border:1px solid rgba(255,209,102,0.25);border-radius:8px;padding:8px;margin:0 0 10px;}
+#leaderboard-list{flex:1;overflow-y:auto;padding:0 14px 20px;display:flex;flex-direction:column;gap:6px;}
+.lb-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);}
+.lb-row.lb-me{border-color:var(--gold);background:rgba(255,209,102,0.12);}
+.lb-row.lb-top{background:linear-gradient(90deg,rgba(255,209,102,0.16),rgba(255,255,255,0.05));border-color:rgba(255,209,102,0.35);}
+.lb-rank{width:30px;text-align:center;font-weight:bold;font-size:13px;}
+.lb-name{flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lb-stats{font-size:10.5px;color:var(--text-dim,#ccc);white-space:nowrap;}
+
+/* ================= GAME SCREEN ================= */
+#screen-game{}
+#{width:100%;padding:10px 12px;display:flex;flex-direction:column;gap:6px;z-index:10;}
+.top-bar{display:flex;justify-content:space-between;align-items:center;width:100%;gap:6px;}
+.stat-box{display:flex;align-items:center;gap:5px;padding:6px 9px;font-size:11px;font-weight:bold;border-radius:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.08);}
+.icon-btn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;width:32px;height:32px;border-radius:9px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.progress-container{width:100%;height:16px;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.12);position:relative;border-radius:8px;overflow:hidden;}
+.progress-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--emerald),#1f9e4c);transition:width 0.3s ease;box-shadow:0 0 10px rgba(61,220,115,0.6);}
+.progress-text{position:absolute;width:100%;height:100%;top:0;left:0;display:flex;justify-content:center;align-items:center;font-size:9.5px;text-shadow:1px 1px #000;font-weight:bold;}
+.biome-label{font-size:9.5px;text-align:center;letter-spacing:2px;color:var(--gold);opacity:0.85;}
+.objective-chip{font-size:10.5px;text-align:center;letter-spacing:0.5px;color:var(--text-light);background:rgba(0,0,0,0.35);border:1px solid rgba(255,209,102,0.25);border-radius:8px;padding:4px 8px;margin-top:2px;font-weight:700;}
+
+#canvas-container{position:relative;flex:1;width:100%;display:flex;justify-content:center;align-items:center;transition:background 0.6s ease;}
+canvas{display:block;touch-action:none;}
+
+#bottom-bar{width:100%;padding:10px;display:flex;justify-content:space-around;align-items:center;background:rgba(0,0,0,0.45);z-index:10;border-top:1px solid rgba(255,255,255,0.06);}
+.booster-btn{position:relative;width:50px;height:50px;display:flex;flex-direction:column;justify-content:center;align-items:center;font-size:8.5px;padding:2px;
+  border-radius:12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:#fff;cursor:pointer;gap:1px;
+}
+.booster-btn canvas{width:22px;height:22px;}
+.booster-btn span{font-size:20px;}
+.booster-count{position:absolute;top:-5px;right:-5px;background:var(--danger);color:white;border:2px solid #1a1030;border-radius:50%;width:18px;height:18px;font-size:10px;display:flex;justify-content:center;align-items:center;font-weight:bold;}
+.booster-btn.active{border-color:var(--gold);box-shadow:0 0 12px rgba(255,209,102,0.7);}
+
+/* ================= OVERLAYS ================= */
+.overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(4,2,14,0.82);display:flex;justify-content:center;align-items:center;z-index:100;opacity:0;pointer-events:none;transition:opacity 0.25s ease;}
+.overlay.active{opacity:1;pointer-events:auto;}
+.modal{width:86%;max-width:360px;padding:24px 22px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;border-radius:24px;}
+.modal h2{font-family:var(--font-display);font-size:19px;color:var(--gold);text-shadow:0 0 14px rgba(255,209,102,0.5);letter-spacing:1px;}
+.modal p{font-size:12px;line-height:1.5;color:var(--text-dim);}
+.modal .stars-row{font-size:26px;letter-spacing:6px;}
+
+#overlay-inventory .modal{max-width:380px;}
+.inv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-height:320px;overflow-y:auto;}
+.inv-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);cursor:pointer;}
+.inv-item .inv-icon{font-size:24px;}
+.inv-item .inv-name{font-size:9px;text-align:center;font-weight:700;}
+.inv-item .inv-count{font-size:10px;color:var(--gold);}
+.inv-item.disabled{opacity:0.35;pointer-events:none;}
+
+#achievement-badge{font-size:64px;filter:drop-shadow(0 0 22px rgba(255,209,102,0.7));}
+
+/* Toast */
+#toast{position:absolute;top:14%;left:50%;transform:translateX(-50%) translateY(-20px);background:rgba(10,6,26,0.92);border:1px solid var(--panel-border);color:#fff;padding:10px 18px;font-size:12px;pointer-events:none;opacity:0;transition:all 0.3s ease;z-index:200;text-align:center;white-space:nowrap;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.5);}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div id="game-container">
+
+  <!-- ============ MAIN MENU ============ -->
+  <div id="screen-menu" class="screen">
+    <div class="orb" style="width:180px;height:180px;background:#7d5fff;top:-40px;left:-40px;"></div>
+    <div class="orb" style="width:200px;height:200px;background:#3ddc73;bottom:60px;right:-60px;animation-delay:2s;"></div>
+    <div class="orb" style="width:140px;height:140px;background:#ffd166;bottom:-40px;left:20px;animation-delay:4s;"></div>
+    <div class="stars-layer"></div>
+
+    <div class="menu-top-stats">
+      <div class="chip">🪙 <span id="menu-coins">0</span></div>
+      <div class="chip">👑 LV <span id="menu-level">1</span></div>
+    </div>
+
+    <div class="menu-mid">
+      <div class="menu-crown">👑</div>
+      <div class="menu-logo">KINGDOM<span>CRUSH</span></div>
+      <div class="menu-sub">MINECRAFT MATCH-3 EDITION</div>
+    </div>
+
+    <div class="menu-buttons">
+      <button class="btn-glow" id="btn-menu-play">▶ PLAY</button>
+      <button class="btn-glow secondary" id="btn-menu-shop">🛒 SHOP</button>
+      <button class="btn-glow secondary" id="btn-menu-leaderboard">🏆 GLOBAL LEADERBOARD</button>
+      <button class="btn-glow secondary" id="btn-menu-settings">⚙ SETTINGS</button>
+      <button class="btn-glow green" id="btn-menu-subscribe">▶ SUBSCRIBE</button>
+    </div>
+
+    <div class="menu-footer">A KINGDOM ORIGINAL &nbsp;·&nbsp; @ARNAV_KINGDOM</div>
+  </div>
+  
+  <!-- ============ LEVEL MAP ============ -->
+  <div id="screen-levelmap" class="screen">
+    <div class="levelmap-topbar">
+      <div class="screen-header" style="padding:0;">
+        <button class="btn-back" id="btn-map-back">←</button>
+        <h2>LEVEL MAP</h2>
+      </div>
+      <div class="levelmap-toprow">
+        <div class="chip">🪙 <span id="map-coins">0</span></div>
+        <button class="btn-glow green sm" id="btn-map-continue" style="width:auto;flex:1;margin-left:10px;">CONTINUE ▶ LV <span id="map-continue-lv">1</span></button>
+      </div>
+    </div>
+    <div id="levelmap-list"></div>
+  </div>
+
+  <!-- ============ SHOP ============ -->
+  <div id="screen-shop" class="screen">
+    <div class="screen-header">
+      <button class="btn-back" id="btn-shop-back">←</button>
+      <h2>ITEM SHOP</h2>
+    </div>
+    <div style="display:flex;justify-content:center;padding-bottom:8px;">
+      <div class="chip">🪙 <span id="shop-coins">0</span></div>
+    </div>
+    <div class="shop-tabs">
+      <div class="shop-tab active" id="tab-boost">BOOSTERS &amp; POWER-UPS</div>
+      <div class="shop-tab" id="tab-cosmetic">✨ AURAS</div>
+    </div>
+    <div class="shop-list" id="shop-list"></div>
+  </div>
+
+  <!-- ============ SETTINGS ============ -->
+  <div id="screen-settings" class="screen">
+    <div class="screen-header">
+      <button class="btn-back" id="btn-settings-back">←</button>
+      <h2>SETTINGS</h2>
+    </div>
+    <div class="settings-list">
+      <button class="btn-glow secondary" id="btn-sound-toggle">🔊 SOUND: ON</button>
+      <button class="btn-glow secondary" id="btn-settings-change-name">🏆 CHANGE LEADERBOARD NAME</button>
+      <button class="btn-glow green" id="btn-settings-subscribe">▶ SUBSCRIBE ON YOUTUBE</button>
+      <button class="btn-glow danger" id="btn-reset-progress">RESET PROGRESS</button>
+      <div style="flex:1;"></div>
+      <div class="menu-footer">KINGDOM CRUSH &nbsp;·&nbsp; v2.0 PREMIUM</div>
+    </div>
+  </div>
+
+  <!-- ============ GLOBAL LEADERBOARD ============ -->
+  <div id="screen-leaderboard" class="screen">
+    <div class="screen-header">
+      <button class="btn-back" id="btn-lb-back">←</button>
+      <h2>🏆 LEADERBOARD</h2>
+    </div>
+    <div class="lb-toprow">
+      <div class="chip" id="leaderboard-my-name">You: (no name set)</div>
+      <button class="btn-glow secondary sm" id="btn-lb-set-name" style="width:auto;">SET NAME</button>
+      <button class="icon-btn" id="btn-lb-refresh">🔄</button>
+    </div>
+    <div id="leaderboard-state"></div>
+    <div id="leaderboard-list"></div>
+  </div>
+
+  <!-- ============ GAME SCREEN ============ -->
+  <div id="screen-game" class="screen">
+    <div id="header">
+      <div class="top-bar">
+        <div class="stat-box">LVL&nbsp;<span id="ui-level" style="color:var(--emerald);">1</span></div>
+        <div class="stat-box">MOVES&nbsp;<span id="ui-moves" style="color:var(--gold);">25</span></div>
+        <div class="stat-box">🪙&nbsp;<span id="ui-coins" style="color:#ffff88;">100</span></div>
+        <button class="icon-btn" id="btn-pause">❚❚</button>
+      </div>
+      <div class="progress-container">
+        <div class="progress-bar" id="ui-progress"></div>
+        <div class="progress-text" id="ui-score-text">SCORE: 0 / 1000</div>
+      </div>
+      <div class="biome-label" id="ui-biome">PLAINS</div>
+      <div class="objective-chip" id="ui-objective">🎯 REACH THE TARGET SCORE</div>
+    </div>
+
+    <div id="canvas-container">
+      <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <div id="bottom-bar">
+      <button class="booster-btn" id="btn-booster-hammer">
+        <div class="booster-count" id="count-hammer">1</div>
+        <canvas id="icon-hammer"></canvas>
+        <span>Hammer</span>
+      </button>
+      <button class="booster-btn" id="btn-booster-shuffle">
+        <div class="booster-count" id="count-shuffle">1</div>
+        <canvas id="icon-shuffle"></canvas>
+        <span>Shuffle</span>
+      </button>
+      <button class="booster-btn" id="btn-booster-tnt">
+        <div class="booster-count" id="count-tnt">1</div>
+        <canvas id="icon-tnt"></canvas>
+        <span>TNT</span>
+      </button>
+      <button class="booster-btn" id="btn-bag">
+        <span>🎒</span>
+        <span>Bag</span>
+      </button>
+      <button class="booster-btn" id="btn-nav-shop">
+        <canvas id="icon-shop"></canvas>
+        <span>Shop</span>
+      </button>
+    </div>
+  </div>
+
+  /* ---------- SCREEN NAVIGATION ---------- */
+  showScreen(name){
+    ['menu','levelmap','shop','settings','game','leaderboard'].forEach(s=>{
+      const el=document.getElementById('screen-'+s);
+      if(el) el.classList.toggle('screen-active', s===name);
+    });
+    if(this.currentScreen!=='shop' && this.currentScreen!=='settings') this.lastScreen=this.currentScreen;
+    this.currentScreen=name;
+    if(name==='menu') this.refreshMenu();
+    if(name==='levelmap') this.renderLevelMap();
+    if(name==='shop') this.renderShop();
+    if(name==='leaderboard') this.renderLeaderboard();
+    if(window.AndroidBridge){
+      if(name==='menu'||name==='shop'){ AndroidBridge.showBanner && AndroidBridge.showBanner(); }
+      else{ AndroidBridge.hideBanner && AndroidBridge.hideBanner(); }
+    }
+  }
+  navigate(name){ this.showScreen(name); }
+  enterLevel(lvl){
+    this.showScreen('game');
+    requestAnimationFrame(()=>{ this.resize(); this.startLevel(lvl); });
+  }
+  /* Looks up the visual metadata (colors/tier) for the currently equipped Aura, or
+     null if none is equipped. Everything Aura-related (menu glow, ambient particles,
+     board outline, match/combo tint, special-piece bursts) reads from here. */
+  getAuraTheme(){
+    const id=this.cosmetics.aura;
+    return id && AURA_THEMES[id] ? AURA_THEMES[id] : null;
+  }
+
+  refreshMenu(){
+    document.getElementById('menu-coins').innerText=this.coins;
+    document.getElementById('menu-level').innerText=this.level;
+    const menuEl=document.getElementById('screen-menu');
+    menuEl.style.background = this.cosmetics.menuTheme || '';
+    const aura=this.getAuraTheme();
+    const crownEl=document.querySelector('.menu-crown');
+    const logoEl=document.querySelector('.menu-logo');
+    if(aura){
+      const c1=aura.colors[0], c2=aura.colors[1]||aura.colors[0];
+      if(crownEl) crownEl.style.filter=`drop-shadow(0 0 ${14+aura.tier*2}px ${c1}) drop-shadow(0 0 ${8+aura.tier}px ${c2})`;
+      if(logoEl) logoEl.style.textShadow=`0 0 ${20+aura.tier*3}px ${c1}${aura.dual?`, 0 0 ${14+aura.tier}px ${c2}`:''}`;
+      menuEl.style.boxShadow = aura.dual
+        ? `inset 0 0 60px ${c1}55, inset 0 0 60px ${c2}33`
+        : `inset 0 0 ${28+aura.tier*4}px ${c1}44`;
+    } else {
+      if(crownEl) crownEl.style.filter='';
+      if(logoEl) logoEl.style.textShadow='';
+      menuEl.style.boxShadow='';
+    }
+  }
+
+  /* ---------- RESIZE ---------- */
+  resize(){
+    const container=document.getElementById('canvas-container');
+    const w=container.clientWidth||360, h=container.clientHeight||360;
+    this.canvas.width=w; this.canvas.height=h;
+    const padding=16;
+    const maxTileW=Math.floor((w-padding*2)/BOARD_SIZE), maxTileH=Math.floor((h-padding*2)/BOARD_SIZE);
+    this.tileSize=Math.max(1,Math.min(maxTileW,maxTileH));
+    this.offsetX=Math.floor((w-this.tileSize*BOARD_SIZE)/2);
+    this.offsetY=Math.floor((h-this.tileSize*BOARD_SIZE)/2);
+  }
+
+  biomeForLevel(lvl){ return BIOMES[Math.floor((lvl-1)/4) % BIOMES.length]; }
+
+  /* ---------- DIFFICULTY CURVE ----------
+     Levels 1-20: Very Easy -> Easy | 21-100: Easy -> Moderate |
+     101-500: Moderate -> Challenging | 501+: Challenging -> Hard.
+     Every tier changes gradually — never a sudden jump between levels — and every
+     level always keeps a generous move floor so a skilled player can realistically win. */
+  computeTargetScore(lvl){
+    if(lvl<=20) return 500+(lvl-1)*130;                       // 500 .. 2970
+    if(lvl<=100) return 2970+(lvl-20)*180;                    // 2970 .. 17370
+    if(lvl<=500) return 17370+(lvl-100)*160;                  // 17370 .. 81370
+    return 81370+(lvl-500)*200;                               // 81370 upward
+  }
+  computeMoves(lvl){
+    if(lvl<=20) return 32;                                    // very generous, easy wins
+    if(lvl<=100) return Math.max(28,32-Math.floor((lvl-20)/10));
+    if(lvl<=500) return Math.max(22,28-Math.floor((lvl-100)/40));
+    return Math.max(20,22-Math.floor((lvl-500)/100));         // never below 20 moves
+  }
+  /* How many of the 8 collectible colors are in play. Fewer colors = easier, more
+     natural matches. Full color variety is only reached around level 100. */
+  getMaxColorIndex(){ return Math.min(7,3+Math.floor(this.level/25)); }
+  /* Obstacle chances now start later and ramp up slowly instead of jumping straight
+     to a fixed % — keeps early/mid levels free of clutter and blockers.
+     Minecraft-themed obstacle rollout (~1 new mechanic every 20-25 levels):
+       Level  1-20: no obstacles at all — pure, easy match-3.
+       Level ~21+ : Wooden Fence (permanent) is introduced, ramping in slowly.
+       Level ~41+ : Cobweb (breakable, 2 hits) is introduced, ramping in slowly. */
+  getObstacleChances(){
+    const stone=this.level>=8 ? Math.min(0.05,(this.level-8)*0.0025) : 0;
+    const ice=this.level>=15 ? Math.min(0.06,(this.level-15)*0.0015) : 0;
+    const obsidian=this.level>=30 ? Math.min(0.05,(this.level-30)*0.0012) : 0;
+    const fence=this.level>=21 ? Math.min(0.07,(this.level-21)*0.0025) : 0;
+    const cobweb=this.level>=41 ? Math.min(0.07,(this.level-41)*0.0022) : 0;
+    return { stone, ice, obsidian, fence, cobweb };
+  }
+  /* Minimum number of distinct valid moves a freshly generated board must offer —
+     higher for early levels so the player always has generous, natural options and
+     never faces a near-dead board that forces one exact move. */
+  getMinBoardMoves(){
+    if(this.level<=20) return 5;
+    if(this.level<=100) return 4;
+    if(this.level<=500) return 3;
+    return 2;
+  }
+
+  /* ---------- LEVEL OBJECTIVES ----------
+     Deterministic-per-level (seeded on the level number) so replaying a level always
+     shows the same objective, without needing any hand-authored per-level table —
+     stays consistent with the rest of this game's fully procedural level system.
+     Types: 'score' (classic), 'jelly' (clear N jelly cells), 'collect' (gather N of
+     1-2 specific collectible colors), 'combo' (clear jelly AND reach a score). */
+  seededRng(seed){
+    let s=seed>>>0;
+    return ()=>{ s|=0; s=(s+0x6D2B79F5)|0; let t=Math.imul(s^(s>>>15),1|s); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; };
+  }
+  computeLevelObjective(lvl){
+    const rng=this.seededRng(lvl*7919+13);
+    const maxColor=this.getMaxColorIndex();
+    const targetScore=this.computeTargetScore(lvl);
+    // Levels 1-4 stay pure "reach the score" so brand-new players learn the basics first.
+    if(lvl<=4) return { type:'score', targetScore };
+    const jellyUnlocked=lvl>=12;
+    const roll=rng();
+    let type;
+    if(!jellyUnlocked) type = roll<0.55 ? 'score' : 'collect';
+    else if(roll<0.34) type='score';
+    else if(roll<0.56) type='jelly';
+    else if(roll<0.80) type='collect';
+    else type='combo';
+
+    if(type==='score') return { type:'score', targetScore };
+
+    if(type==='jelly'){
+      const jellyTarget=Math.min(20, 6+Math.floor(lvl/15));
+      return { type:'jelly', jellyTarget, label:`CLEAR ${jellyTarget} JELLY` };
+    }
+    if(type==='combo'){
+      const jellyTarget=Math.min(14, 4+Math.floor(lvl/22));
+      const comboScore=Math.round(targetScore*0.6);
+      return { type:'combo', jellyTarget, targetScore:comboScore, label:`CLEAR ${jellyTarget} JELLY + SCORE ${comboScore}` };
+    }
+    // 'collect' — one or two colors depending on level, always within colors that can
+    // actually appear on this level's board (never asks for a color that can't spawn).
+    const twoColors = lvl>=25 && rng()<0.5 && maxColor>=1;
+    const pick=()=>Math.floor(rng()*(maxColor+1));
+    const collectTargets={};
+    if(twoColors){
+      let a=pick(), b=pick(); while(b===a) b=pick();
+      const amt=Math.min(30, 10+Math.floor(lvl/12));
+      collectTargets[a]=amt; collectTargets[b]=amt;
+    } else {
+      const a=pick();
+      const amt=Math.min(40, 14+Math.floor(lvl/9));
+      collectTargets[a]=amt;
+    }
+    const label='COLLECT '+Object.entries(collectTargets).map(([t,n])=>`${n} ${COLLECTIBLE_META[t].name.toUpperCase()}`).join(' + ');
+    return { type:'collect', collectTargets, label };
+  }
+  
+  /* ---------- BOARD SHAPES ----------
+     Board shapes are implemented as permanent VOID cells (see BLOCK_TYPES.VOID /
+     isPermanent) placed BEFORE the normal obstacle/collectible roll, so every
+     existing match/gravity/refill/booster system needs zero changes — a void cell
+     is simply never eligible to hold a tile, exactly like Obsidian already isn't
+     eligible to be destroyed. Kept intentionally light (well under half the board)
+     so the existing "guarantee a playable board" retry loop always has plenty of
+     room to find enough valid moves. */
+  computeBoardShape(lvl){
+    const voidSet=new Set();
+    if(lvl<6) return voidSet; // early levels: simple, full rectangular board
+    const rng=this.seededRng(lvl*104729+3);
+    const add=(r,c)=>{ if(r>=0&&r<BOARD_SIZE&&c>=0&&c<BOARD_SIZE) voidSet.add(r+'_'+c); };
+    const addBlock=(r0,c0,rh,cw)=>{ for(let r=r0;r<r0+rh;r++) for(let c=c0;c<c0+cw;c++) add(r,c); };
+    // Shape intensity ramps up with level, mirroring the difficulty curve elsewhere.
+    const tier = lvl<40 ? 1 : lvl<120 ? 2 : 3;
+    const roll=rng();
+    let shape='none';
+    if(lvl>=60 && roll<0.12) shape='lshape';
+    else if(lvl>=45 && roll<0.24) shape='tshape';
+    else if(roll<0.40) shape='split';
+    else if(roll<0.58) shape='ring';
+    else if(roll<0.76) shape='corners';
+    else shape='none';
+
+    if(shape==='corners'){
+      const cs=tier===1?1:tier===2?2:2;
+      addBlock(0,0,cs,cs); addBlock(0,BOARD_SIZE-cs,cs,cs);
+      addBlock(BOARD_SIZE-cs,0,cs,cs); addBlock(BOARD_SIZE-cs,BOARD_SIZE-cs,cs,cs);
+    } else if(shape==='ring'){
+      const cs=tier===1?2:tier===2?2:4;
+      const off=Math.floor((BOARD_SIZE-cs)/2);
+      addBlock(off,off,cs,cs);
+    } else if(shape==='split'){
+      const col=rng()<0.5?3:4;
+      for(let r=1;r<BOARD_SIZE-1;r++) add(r,col);
+    } else if(shape==='lshape'){
+      addBlock(BOARD_SIZE-3,BOARD_SIZE-3,3,3);
+      voidSet.delete((BOARD_SIZE-3)+'_'+(BOARD_SIZE-3)); voidSet.delete((BOARD_SIZE-3)+'_'+(BOARD_SIZE-2));
+      voidSet.delete((BOARD_SIZE-2)+'_'+(BOARD_SIZE-3));
+    } else if(shape==='tshape'){
+      addBlock(BOARD_SIZE-2,0,2,2); addBlock(BOARD_SIZE-2,BOARD_SIZE-2,2,2);
+    }
+    // Safety cap: never void more than a quarter of the board, whatever the shape math above did.
+    if(voidSet.size>16){
+      const arr=[...voidSet]; while(arr.length>16){ voidSet.delete(arr.pop()); }
+    }
+    return voidSet;
+  }
+
+  /* ---------- LEVEL FLOW ---------- */
+  startLevel(lvl){
+    this.level=lvl;
+    this.score=0;
+    this.targetScore=this.computeTargetScore(lvl);
+    this.moves=this.computeMoves(lvl);
+    this.scoreMultiplierTemp=1;
+    this.totemUsedThisLevel=false;
+    this.currentBiome=this.biomeForLevel(lvl);
+    this.collectedCounts={};
+    this.jellyCleared=0;
+    this.objective=this.computeLevelObjective(lvl);
+    this.boardShape=this.computeBoardShape(lvl);
+    if(this.objective.targetScore!==undefined) this.targetScore=this.objective.targetScore;
+    this.applyBiomeVisuals();
+    this.generatePlayableBoard();
+    this.updateUI();
+    this.updateObjectiveUI();
+    this.showToast(`LEVEL ${lvl} · ${this.currentBiome.name.toUpperCase()}`);
+  }
+
+  applyBiomeVisuals(){
+    const b=this.currentBiome;
+    document.getElementById('canvas-container').style.background=`linear-gradient(160deg, ${b.sky[0]}, ${b.sky[1]})`;
+    document.getElementById('ui-biome').innerText=b.name.toUpperCase();
+  }
+
+  applyCosmetics(){
+    this.canvas.style.filter=this.cosmetics.blockFilter||'none';
+    const winModal=document.querySelector('#overlay-win .modal');
+    if(winModal) winModal.style.background=this.cosmetics.victoryBg||'';
+  }
+
+  /* ---------- PROCEDURAL LEVEL & BOARD GENERATOR ---------- */
+  generatePlayableBoard(){
+    let valid=false, attempts=0, bestBoard=null, bestMoveCount=-1;
+    const minMoves=this.getMinBoardMoves();
+    const { stone:stoneChance, ice:iceChance, obsidian:obsidianChance, fence:fenceChance, cobweb:cobwebChance } = this.getObstacleChances();
+    const maxColorIndex=this.getMaxColorIndex();
+    const voidSet=this.boardShape||new Set();
+    while(!valid && attempts<100){
+      attempts++;
+      this.board=[];
+      for(let r=0;r<BOARD_SIZE;r++){
+        this.board[r]=[];
+        for(let c=0;c<BOARD_SIZE;c++){
+          let type, extra=null;
+          if(voidSet.has(r+'_'+c)){
+            type=BLOCK_TYPES.VOID;
+          } else {
+          const randObstacle=Math.random();
+          let threshold=0;
+          if(this.level>=8 && randObstacle<(threshold+=stoneChance)) type=BLOCK_TYPES.STONE;
+          else if(this.level>=15 && randObstacle<(threshold+=iceChance)) type=BLOCK_TYPES.ICE;
+          else if(this.level>=30 && randObstacle<(threshold+=obsidianChance)) type=BLOCK_TYPES.OBSIDIAN;
+          else if(this.level>=21 && randObstacle<(threshold+=fenceChance)) type=BLOCK_TYPES.FENCE;
+          else if(this.level>=41 && randObstacle<(threshold+=cobwebChance)) { type=BLOCK_TYPES.COBWEB; extra={webHealth:2}; }
+          else{
+            let forbidden=[];
+            if(c>=2 && this.board[r][c-1].type===this.board[r][c-2].type) forbidden.push(this.board[r][c-1].type);
+            if(r>=2 && this.board[r-1][c].type===this.board[r-2][c].type) forbidden.push(this.board[r-2][c].type);
+            do{ type=Math.floor(Math.random()*(maxColorIndex+1)); } while(forbidden.includes(type));
+          }
+          }
+          this.board[r][c]=Object.assign({ type, row:r, col:c, x:c*this.tileSize, y:r*this.tileSize, targetX:c*this.tileSize, targetY:r*this.tileSize, scale:1, alpha:1, isMatch:false }, extra);
+        }
+      }
+      /* Automatically make a statistically-tough layout more forgiving: keep generating
+         until the board offers a generous number of natural move options, not just one. */
+      const moveCount=this.countPossibleMoves();
+      if(moveCount>bestMoveCount){ bestMoveCount=moveCount; bestBoard=this.cloneBoard(); }
+      if(moveCount>=minMoves) valid=true;
+    }
+    if(!valid && bestBoard) this.board=bestBoard;
+    this.jellyGrid=this.generateJellyGrid();
+  }
+
+  /* ---------- WHITE JELLY / GEL OBSTACLE ----------
+     Cell-based overlay layer (NOT attached to a specific tile), so it survives gravity
+     and refill correctly and just sits over whichever ingot/gem currently occupies that
+     board position. Starts ramping in around level 12, needs 3 hits to fully clear. */
+  getJellyChance(){ return this.level>=12 ? Math.min(0.10,(this.level-12)*0.003) : 0; }
+  generateJellyGrid(){
+    const grid=[];
+    const chance=this.getJellyChance();
+    const eligibleCells=[];
+    for(let r=0;r<BOARD_SIZE;r++){
+      grid[r]=[];
+      for(let c=0;c<BOARD_SIZE;c++){
+        const t=this.board[r][c];
+        const eligible=t && !this.isObstacle(t) && t.type!==BLOCK_TYPES.TNT && t.type!==BLOCK_TYPES.RAINBOW;
+        if(eligible) eligibleCells.push([r,c]);
+        grid[r][c]=(eligible && chance>0 && Math.random()<chance) ? 3 : 0;
+      }
+    }
+    // For a "clear the jelly" objective, guarantee enough jelly actually exists on the
+    // freshly generated board to hit the target — never rely on the low background
+    // chance alone, which could otherwise hand the player an unwinnable objective.
+    const obj=this.objective;
+    if(obj && (obj.type==='jelly' || obj.type==='combo') && obj.jellyTarget){
+      let current=0;
+      for(const [r,c] of eligibleCells) if(grid[r][c]>0) current++;
+      if(current<obj.jellyTarget){
+        const shuffled=[...eligibleCells].sort(()=>Math.random()-0.5);
+        for(const [r,c] of shuffled){
+          if(current>=obj.jellyTarget) break;
+          if(grid[r][c]<=0){ grid[r][c]=3; current++; }
+        }
+      }
+    }
+    return grid;
+  }
+  /* Registers one "hit" on a jelly-covered cell — called from anything that legitimately
+     affects that cell (a match, or an area effect reaching it). Never destroys the tile
+     itself; the ingot keeps matching/falling normally, only the jelly layer thins out. */
+  hitJelly(r,c){
+    if(!this.jellyGrid || !this.jellyGrid[r] || !this.jellyGrid[r][c]) return;
+    this.jellyGrid[r][c]--;
+    const px=c*this.tileSize+this.tileSize/2, py=r*this.tileSize+this.tileSize/2;
+    if(this.jellyGrid[r][c]<=0){ this.spawnParticles(px,py,'#ffffff',14); this.jellyCleared=(this.jellyCleared||0)+1; }
+    else this.spawnParticles(px,py,'#eaf6ff',6);
+  }
+  /* Draws the translucent white gel overlay + crack pattern, progressively thinner and
+     more cracked with each hit. Called inside the same translated/scaled tile context
+     used by drawTileVisual, so the ingot underneath always stays fully visible. */
+  drawJellyOverlay(ctx,hits,size){
+    const dmg=1-(hits/3); // 0 = fresh, ~0.67 = about to break
+    ctx.save();
+    const r=size*0.46;
+    const grad=ctx.createRadialGradient(-r*0.3,-r*0.3,r*0.1,0,0,r);
+    grad.addColorStop(0,`rgba(255,255,255,${0.55-dmg*0.28})`);
+    grad.addColorStop(1,`rgba(225,240,255,${0.32-dmg*0.18})`);
+    ctx.fillStyle=grad;
+    const jx=-size/2+3, jy=-size/2+3, jw=size-6, jh=size-6, jrad=size*0.14;
+    ctx.beginPath(); ctx.moveTo(jx+jrad,jy); ctx.arcTo(jx+jw,jy,jx+jw,jy+jh,jrad); ctx.arcTo(jx+jw,jy+jh,jx,jy+jh,jrad); ctx.arcTo(jx,jy+jh,jx,jy,jrad); ctx.arcTo(jx,jy,jx+jw,jy,jrad); ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle=`rgba(255,255,255,${0.7-dmg*0.3})`; ctx.lineWidth=1.5; ctx.stroke();
+    // crack lines: more of them, and more visible, as hits accumulate (3->0)
+    const crackCount=hits===3?2:hits===2?4:6;
+    ctx.strokeStyle=`rgba(160,200,220,${0.4+dmg*0.4})`; ctx.lineWidth=1.2;
+    for(let i=0;i<crackCount;i++){
+      const seed=i*37.7+hits*13;
+      const sx=Math.sin(seed)*r*0.5, sy=Math.cos(seed*1.3)*r*0.5;
+      const ex=sx+Math.sin(seed*2.1)*r*0.4, ey=sy+Math.cos(seed*1.7)*r*0.4;
+      ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(ex,ey); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  cloneBoard(){
+    const copy=[];
+    for(let r=0;r<BOARD_SIZE;r++){ copy[r]=[]; for(let c=0;c<BOARD_SIZE;c++){ copy[r][c]=this.board[r][c]?{...this.board[r][c]}:null; } }
+    return copy;
+  }
+
+  hasPossibleMoves(){
+    for(let r=0;r<BOARD_SIZE;r++){
+      for(let c=0;c<BOARD_SIZE;c++){
+        if(c<BOARD_SIZE-1){ this.swapBoardTiles(r,c,r,c+1); const m=this.findMatches(); this.swapBoardTiles(r,c,r,c+1); if(m.length>0) return true; }
+        if(r<BOARD_SIZE-1){ this.swapBoardTiles(r+1,c,r,c); const m=this.findMatches(); this.swapBoardTiles(r+1,c,r,c); if(m.length>0) return true; }
+      }
+    }
+    return false;
+  }
+
+  /* Counts how many distinct single-swaps on the current board would create a match —
+     used to keep freshly generated boards generous rather than barely playable. */
+  countPossibleMoves(){
+    let count=0;
+    for(let r=0;r<BOARD_SIZE;r++){
+      for(let c=0;c<BOARD_SIZE;c++){
+        if(c<BOARD_SIZE-1){ this.swapBoardTiles(r,c,r,c+1); if(this.findMatches().length>0) count++; this.swapBoardTiles(r,c,r,c+1); }
+        if(r<BOARD_SIZE-1){ this.swapBoardTiles(r+1,c,r,c); if(this.findMatches().length>0) count++; this.swapBoardTiles(r+1,c,r,c); }
+      }
+    }
+    return count;
+  }
+
+  swapBoardTiles(r1,c1,r2,c2){
+    const temp=this.board[r1][c1]; this.board[r1][c1]=this.board[r2][c2]; this.board[r2][c2]=temp;
+    if(this.board[r1][c1]){ this.board[r1][c1].row=r1; this.board[r1][c1].col=c1; }
+    if(this.board[r2][c2]){ this.board[r2][c2].row=r2; this.board[r2][c2].col=c2; }
+  }
+
+  /* ---------- LOOP ---------- */
+  loop(time){
+    // Reschedule FIRST so a stray error in update/render can never kill the loop.
+    requestAnimationFrame((t)=>this.loop(t));
+    const dt=Math.min((time-this.lastTime)/1000,0.05);
+    this.lastTime=time;
+    if(this.currentScreen==='game' && this.isBoardReady()){ this.update(dt); this.render(); }
+  }
+
+  isBoardReady(){
+    if(!this.board || this.board.length!==BOARD_SIZE) return false;
+    for(let r=0;r<BOARD_SIZE;r++){
+      if(!Array.isArray(this.board[r]) || this.board[r].length!==BOARD_SIZE) return false;
+    }
+    return true;
+  }
+
+  update(dt){
+    let moving=false;
+    this.animTime=(this.animTime||0)+dt;
+    for(let r=0;r<BOARD_SIZE;r++){
+      for(let c=0;c<BOARD_SIZE;c++){
+        const tile=this.board[r] && this.board[r][c];
+        if(!tile) continue;
+        tile.targetX=c*this.tileSize; tile.targetY=r*this.tileSize;
+        const dx=tile.targetX-tile.x, dy=tile.targetY-tile.y;
+        const moved=Math.abs(dx)>0.5||Math.abs(dy)>0.5;
+        if(moved){ tile.x+=dx*12*dt; tile.y+=dy*12*dt; moving=true; tile._wasMoving=true; }
+        else{
+          tile.x=tile.targetX; tile.y=tile.targetY;
+          if(tile._wasMoving){ tile.bounce=1; tile._wasMoving=false; }
+        }
+        if(tile.bounce>0){ tile.bounce-=dt*6; if(tile.bounce<0) tile.bounce=0; }
+      }
+    }
+    for(let i=this.particles.length-1;i>=0;i--){ this.particles[i].update(); if(this.particles[i].life<=0) this.particles.splice(i,1); }
+    for(let i=this.floatingTexts.length-1;i>=0;i--){ this.floatingTexts[i].update(); if(this.floatingTexts[i].life<=0) this.floatingTexts.splice(i,1); }
+    for(let i=this.shockwaves.length-1;i>=0;i--){ this.shockwaves[i].update(); if(this.shockwaves[i].life<=0) this.shockwaves.splice(i,1); }
+    if(this.cameraShake>0){ this.cameraShake-=dt*30; if(this.cameraShake<0) this.cameraShake=0; }
+
+    this.ambientTimer+=dt;
+    const aura=this.getAuraTheme();
+    const spawnChance=0.6+(aura?aura.tier*0.015:0);
+    if(this.ambientTimer>0.28){
+      this.ambientTimer=0;
+      if(Math.random()<spawnChance && this.tileSize>0) this.spawnBiomeAmbient(aura);
+    }
+    this.isAnimating=moving;
+  }
+
+  render(){
+    this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
+    this.ctx.save();
+    if(this.cameraShake>0){ const sx=(Math.random()-0.5)*this.cameraShake*4, sy=(Math.random()-0.5)*this.cameraShake*4; this.ctx.translate(sx,sy); }
+
+    const aura=this.getAuraTheme();
+    let frameColor=this.cosmetics.boardFrame||this.currentBiome.accent, frameBlur=18, frameWidth=3;
+    if(aura){ frameColor=aura.colors[0]; frameBlur=18+aura.tier*2; frameWidth=3+Math.min(3,Math.floor(aura.tier/3)); }
+    this.ctx.fillStyle='rgba(0,0,0,0.4)';
+    this.ctx.fillRect(this.offsetX-4,this.offsetY-4,BOARD_SIZE*this.tileSize+8,BOARD_SIZE*this.tileSize+8);
+    this.ctx.save();
+    this.ctx.shadowColor=frameColor; this.ctx.shadowBlur=frameBlur;
+    this.ctx.strokeStyle=frameColor; this.ctx.lineWidth=frameWidth;
+    this.ctx.strokeRect(this.offsetX-4,this.offsetY-4,BOARD_SIZE*this.tileSize+8,BOARD_SIZE*this.tileSize+8);
+    if(aura && aura.dual){
+      // Dual Storm: a second interleaved outline pass in the storm's other color.
+      this.ctx.shadowColor=aura.colors[1]; this.ctx.shadowBlur=frameBlur*0.8;
+      this.ctx.strokeStyle=aura.colors[1]; this.ctx.lineWidth=Math.max(1,frameWidth-1.5);
+      this.ctx.globalAlpha=0.7;
+      this.ctx.strokeRect(this.offsetX-7,this.offsetY-7,BOARD_SIZE*this.tileSize+14,BOARD_SIZE*this.tileSize+14);
+      this.ctx.globalAlpha=1;
+    }
+    this.ctx.restore();
+
+    for(let r=0;r<BOARD_SIZE;r++){
+      for(let c=0;c<BOARD_SIZE;c++){
+        const px=this.offsetX+c*this.tileSize, py=this.offsetY+r*this.tileSize;
+        this.ctx.fillStyle=(r+c)%2===0?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.15)';
+        this.ctx.fillRect(px,py,this.tileSize,this.tileSize);
+      }
+    }
+
+    for(let r=0;r<BOARD_SIZE;r++){
+      for(let c=0;c<BOARD_SIZE;c++){
+        const tile=this.board[r] && this.board[r][c]; if(!tile) continue;
+        const renderX=this.offsetX+tile.x, renderY=this.offsetY+tile.y;
+        const bounce=tile.bounce||0;
+        this.ctx.save();
+        this.ctx.translate(renderX+this.tileSize/2, renderY+this.tileSize/2);
+        this.ctx.scale((tile.scale||1)*(1+bounce*0.12),(tile.scale||1)*(1-bounce*0.18));
+        this.drawTileVisual(this.ctx,tile,r,c,this.tileSize,this.animTime);
+        const jellyHits=this.jellyGrid && this.jellyGrid[r] ? this.jellyGrid[r][c] : 0;
+        if(jellyHits>0) this.drawJellyOverlay(this.ctx,jellyHits,this.tileSize);
+        if(this.selectedTile && this.selectedTile.row===r && this.selectedTile.col===c){
+          this.ctx.strokeStyle='#ffff55'; this.ctx.lineWidth=4;
+          this.ctx.strokeRect(-this.tileSize/2+2,-this.tileSize/2+2,this.tileSize-4,this.tileSize-4);
+        }
+        if(this.enderFirst && this.enderFirst.r===r && this.enderFirst.c===c){
+          this.ctx.strokeStyle='#c9a8ff'; this.ctx.lineWidth=4;
+          this.ctx.strokeRect(-this.tileSize/2+2,-this.tileSize/2+2,this.tileSize-4,this.tileSize-4);
+        }
+        this.ctx.restore();
+      }
+    }
+
+    if(this.rainbowFX) this.drawRainbowFX(this.ctx);
+    this.shockwaves.forEach(sw=>sw.draw(this.ctx));
+    this.particles.forEach(p=>p.draw(this.ctx));
+    this.floatingTexts.forEach(ft=>ft.draw(this.ctx));
+    this.ctx.restore();
+  }
+
+  /* ---------- SPECIAL PIECE VISUALS (drawn live each frame, not from the static texture cache) ---------- */
+  drawTileVisual(ctx,tile,r,c,size,animTime){
+    if(tile.type===BLOCK_TYPES.RAINBOW){
+      const fx=this.rainbowFX;
+      const boost=(fx && fx.orbRow===r && fx.orbCol===c) ? fx.phase : null;
+      this.drawRainbowOrb(ctx,size,animTime,boost);
+      return;
+    }
+    if(tile.special==='rolling'){ this.drawRollingBall(ctx,tile.type,size,animTime); return; }
+    if(tile.type===BLOCK_TYPES.COBWEB){
+      const wobble=Math.sin(animTime*1.6+(r*5+c))*size*0.01;
+      ctx.save(); ctx.translate(-size/2,-size/2);
+      drawCobwebStrands(ctx,size,wobble,tile.webHealth!==undefined?tile.webHealth:2);
+      ctx.restore();
+      return;
+    }
+    const tex=textureCache[tile.type];
+    if(tex){
+      ctx.globalAlpha=0.88+0.12*Math.sin(animTime*2+(r*3+c));
+      ctx.drawImage(tex,-size/2+2,-size/2+2,size-4,size-4);
+      ctx.globalAlpha=1;
+    }
+    if(tile.special==='line') this.drawLineOverlay(ctx,size,tile.lineDir,animTime);
+    else if(tile.special==='wrapped') this.drawWrappedOverlay(ctx,size,animTime);
+  }
+
+  /* RAINBOW ORB: always a spherical, rainbow-colored, glowing, sparkling premium piece —
+     clearly different from every other special. `boost` (charge/buildup/targeting/release)
+     intensifies the glow and spin while the cinematic activation sequence plays. */
+  drawRainbowOrb(ctx,size,animTime,boost){
+    const boosting=boost==='charge'||boost==='buildup'||boost==='targeting';
+    const spinMult=boosting?(boost==='charge'?1.6:boost==='buildup'?2.4:3.2):1;
+    const glowMult=boosting?(boost==='charge'?1.15:boost==='buildup'?1.4:1.6):1;
+    const r=size*0.38*(boost==='release'?1.12:1);
+    const hue=(animTime*90*spinMult)%360;
+    ctx.save();
+    ctx.shadowColor=`hsl(${hue},100%,60%)`; ctx.shadowBlur=size*0.32*glowMult;
+    const grad=ctx.createRadialGradient(-r*0.32,-r*0.36,r*0.08,0,0,r*1.2);
+    grad.addColorStop(0,'#ffffff');
+    grad.addColorStop(0.25,`hsl(${hue},95%,72%)`);
+    grad.addColorStop(0.6,`hsl(${(hue+120)%360},95%,55%)`);
+    grad.addColorStop(1,`hsl(${(hue+240)%360},95%,38%)`);
+    ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fillStyle=grad; ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.strokeStyle='rgba(255,255,255,0.75)'; ctx.lineWidth=size*0.022; ctx.stroke();
+    /* strong dark outer rim for small-screen readability, distinct from any other piece */
+    ctx.strokeStyle='rgba(20,10,40,0.55)'; ctx.lineWidth=size*0.012; ctx.stroke();
+    const orbitCount=boosting?6:4;
+    for(let i=0;i<orbitCount;i++){
+      const a=animTime*2.4*spinMult+i*(Math.PI*2/orbitCount);
+      const sx=Math.cos(a)*r*0.68, sy=Math.sin(a)*r*0.68;
+      ctx.globalAlpha=0.55+0.45*Math.sin(animTime*4+i*1.7);
+      ctx.fillStyle='#ffffff';
+      ctx.beginPath(); ctx.arc(sx,sy,size*(boosting?0.038:0.03),0,Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha=1;
+    ctx.restore();
+  }
+
+  /* ROLLING SPECIAL: always ONE solid color family from the collectible that created it
+     (never rainbow), a clean 3D sphere with visible seam texture, strong outline/depth,
+     and a smooth rolling spin — kept visually distinct from the Rainbow Orb. */
+  drawRollingBall(ctx,type,size,animTime){
+    const pal=TYPE_PALETTE[type]||['#333','#888','#ddd'];
+    const [dark,mid,light]=pal;
+    const r=size*0.36;
+    ctx.save();
+    ctx.shadowColor=mid; ctx.shadowBlur=size*0.22;
+    const grad=ctx.createRadialGradient(-r*0.35,-r*0.4,r*0.08,0,0,r*1.15);
+    grad.addColorStop(0,light); grad.addColorStop(0.5,mid); grad.addColorStop(1,dark);
+    ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fillStyle=grad; ctx.fill();
+    ctx.shadowBlur=0;
+    const spin=animTime*3.2;
+    /* visible seam texture so it always reads as a solid single-color rolling piece */
+    ctx.save(); ctx.clip();
+    ctx.strokeStyle='rgba(0,0,0,0.3)'; ctx.lineWidth=size*0.016;
+    ctx.beginPath(); ctx.arc(0,0,r*0.66,spin,spin+Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0,0,r*0.66,spin+Math.PI,spin+Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(0,0,r*0.94,r*0.3,spin*0.6,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+    ctx.save(); ctx.rotate(spin);
+    ctx.fillStyle='rgba(255,255,255,0.65)';
+    ctx.beginPath(); ctx.ellipse(-r*0.3,-r*0.35,r*0.32,r*0.15,0,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+    /* strong dual-tone outline for small-screen readability */
+    ctx.strokeStyle=dark; ctx.lineWidth=size*0.03; ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke();
+    ctx.strokeStyle='rgba(0,0,0,0.5)'; ctx.lineWidth=size*0.012; ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+
+  /* LINE SPECIAL: clearly-separated white/light energy stripes wrapping around the
+     original 3D collectible, with an animated shimmer so it reads instantly as a
+     row/column-clearing piece — while staying the same collectible color underneath. */
+  drawLineOverlay(ctx,size,dir,animTime){
+    const glow=0.5+0.5*Math.sin(animTime*4);
+    const w=size*0.86;
+    ctx.save();
+    ctx.rotate(dir==='col'?0:Math.PI/2);
+    /* soft backing glow so the stripes separate from the base collectible */
+    ctx.save();
+    ctx.globalAlpha=0.28+0.14*glow;
+    ctx.shadowColor='#ffffff'; ctx.shadowBlur=size*0.3;
+    ctx.fillStyle='#ffffff';
+    ctx.fillRect(-size*0.16,-w/2,size*0.32,w);
+    ctx.restore();
+    /* three separated stripes, each with dark edge shading + bright core, wrapping the piece */
+    const stripeCount=3, stripeW=size*0.075, gap=size*0.115;
+    for(let i=0;i<stripeCount;i++){
+      const off=(i-1)*gap;
+      const shimmer=0.55+0.45*Math.sin(animTime*5+i*1.4);
+      ctx.save();
+      ctx.globalAlpha=0.55+0.4*shimmer;
+      ctx.shadowColor='#ffffff'; ctx.shadowBlur=size*0.16;
+      const grad=ctx.createLinearGradient(off-stripeW/2,0,off+stripeW/2,0);
+      grad.addColorStop(0,'rgba(120,150,255,0.15)');
+      grad.addColorStop(0.5,'#ffffff');
+      grad.addColorStop(1,'rgba(120,150,255,0.15)');
+      ctx.fillStyle=grad;
+      ctx.fillRect(off-stripeW/2,-w/2,stripeW,w);
+      ctx.shadowBlur=0;
+      ctx.strokeStyle='rgba(40,60,140,0.55)'; ctx.lineWidth=size*0.012;
+      ctx.strokeRect(off-stripeW/2,-w/2,stripeW,w);
+      ctx.restore();
+    }
+    ctx.restore();
+    /* strong premium outline + corner glints so it never looks like a flat border */
+    ctx.save();
+    ctx.strokeStyle=`rgba(255,255,255,${0.45+0.35*glow})`; ctx.lineWidth=size*0.05;
+    ctx.shadowColor='#ffffff'; ctx.shadowBlur=size*0.12;
+    ctx.strokeRect(-size/2+3,-size/2+3,size-6,size-6);
+    ctx.shadowBlur=0;
+    ctx.strokeStyle='rgba(10,10,30,0.5)'; ctx.lineWidth=size*0.018;
+    ctx.strokeRect(-size/2+3,-size/2+3,size-6,size-6);
+    ctx.restore();
+  }
+
+  /* WRAPPED SPECIAL: a clearly wrapped 3D power-up — strongly contrasting cross-bands
+     over the original collectible's own color, with visible folds, darker creases,
+     bright highlights, a subtle glow and a small idle "breathing" animation so the
+     wrapper never disappears into the base texture. */
+  drawWrappedOverlay(ctx,size,animTime){
+    const breathe=1+0.045*Math.sin(animTime*3.2);
+    const shimmer=0.5+0.5*Math.sin(animTime*4.5);
+    ctx.save();
+    ctx.scale(breathe,breathe);
+    /* soft outer glow so the wrapper reads as a power-up, not decoration */
+    ctx.save();
+    ctx.globalAlpha=0.35+0.2*shimmer;
+    ctx.shadowColor='#ffe9a8'; ctx.shadowBlur=size*0.28;
+    ctx.strokeStyle='#ffe9a8'; ctx.lineWidth=size*0.03;
+    ctx.strokeRect(-size*0.43,-size*0.43,size*0.86,size*0.86);
+    ctx.restore();
+
+    const bandW=size*0.22;
+    const drawBand=(rot)=>{
+      ctx.save();
+      ctx.rotate(rot);
+      /* band body: strongly contrasting warm wrapper color over the base gem/ingot */
+      const grad=ctx.createLinearGradient(0,-bandW/2,0,bandW/2);
+      grad.addColorStop(0,'#7a3a10'); grad.addColorStop(0.18,'#ffb347'); grad.addColorStop(0.5,'#ffe9a8'); grad.addColorStop(0.82,'#ffb347'); grad.addColorStop(1,'#7a3a10');
+      ctx.fillStyle=grad;
+      ctx.fillRect(-size*0.46,-bandW/2,size*0.92,bandW);
+      /* dark creases/folds across the band for 3D depth */
+      ctx.strokeStyle='rgba(90,45,10,0.55)'; ctx.lineWidth=size*0.014;
+      for(let f=-3;f<=3;f++){ ctx.beginPath(); ctx.moveTo(f*size*0.11,-bandW/2); ctx.lineTo(f*size*0.11+size*0.03,bandW/2); ctx.stroke(); }
+      /* bright top-edge highlight */
+      ctx.fillStyle='rgba(255,255,255,0.55)';
+      ctx.fillRect(-size*0.46,-bandW/2,size*0.92,bandW*0.16);
+      /* dark bottom-edge crease */
+      ctx.fillStyle='rgba(60,28,4,0.5)';
+      ctx.fillRect(-size*0.46,bandW/2-bandW*0.14,size*0.92,bandW*0.14);
+      /* strong outline so the band separates cleanly from the gem underneath */
+      ctx.strokeStyle='rgba(50,24,4,0.85)'; ctx.lineWidth=size*0.02;
+      ctx.strokeRect(-size*0.46,-bandW/2,size*0.92,bandW);
+      ctx.restore();
+    };
+    drawBand(0);
+    drawBand(Math.PI/2);
+
+    /* center knot/bow — makes it unmistakably a "wrapped" piece */
+    ctx.save();
+    ctx.globalAlpha=0.9+0.1*shimmer;
+    ctx.fillStyle='#ffe9a8'; ctx.strokeStyle='rgba(90,45,10,0.7)'; ctx.lineWidth=size*0.014;
+    ctx.beginPath(); ctx.arc(0,0,size*0.09,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  /* ---------- INPUT ---------- */
+  initEvents(){
+    /* ---------- GLOBAL UI POP-SOUND DELEGATION ----------
+       One listener covers every current AND future clickable UI control (menu, shop,
+       settings, overlays, level map nodes, inventory items, shop items) without needing
+       to touch each individual onclick handler — lightweight, no new AudioContext per tap. */
+    document.getElementById('game-container').addEventListener('click',(e)=>{
+      const el=e.target.closest('button, .shop-tab, .level-node, .inv-item');
+      if(!el) return;
+      audio.init();
+      if((el.classList.contains('level-node') && el.classList.contains('locked')) ||
+         (el.classList.contains('inv-item') && el.classList.contains('disabled')) ||
+         el.disabled){
+        audio.playPop('invalid'); return;
+      }
+      if(el.id==='btn-buy-moves' || el.classList.contains('shop-buy-btn')) audio.playPop('purchase');
+      else if(el.id==='btn-achievement-continue' || el.id==='btn-achievement-share') audio.playPop('achievement');
+      else if(el.classList.contains('btn-glow') && !el.classList.contains('secondary')) audio.playPop('primary');
+      else audio.playPop('normal');
+    });
+
+    let startX=0,startY=0,isDragging=false;
+    const getCoords=(e)=>{
+      const rect=this.canvas.getBoundingClientRect();
+      const clientX=e.touches?e.touches[0].clientX:e.clientX, clientY=e.touches?e.touches[0].clientY:e.clientY;
+      return { x:clientX-rect.left-this.offsetX, y:clientY-rect.top-this.offsetY };
+    };
+    const handleStart=(e)=>{
+      if(this.isAnimating||this.inputLocked||this.currentScreen!=='game') return;
+      audio.init();
+      const pos=getCoords(e);
+      const c=Math.floor(pos.x/this.tileSize), r=Math.floor(pos.y/this.tileSize);
+      if(r>=0&&r<BOARD_SIZE&&c>=0&&c<BOARD_SIZE){
+        startX=pos.x; startY=pos.y; isDragging=true;
+        if(this.activeBooster){ this.useBooster(r,c); }
+        else{
+          if(this.selectedTile){
+            const dr=Math.abs(this.selectedTile.row-r), dc=Math.abs(this.selectedTile.col-c);
+            if((dr===1&&dc===0)||(dr===0&&dc===1)){ this.trySwap(this.selectedTile.row,this.selectedTile.col,r,c); this.selectedTile=null; }
+            else{ this.selectedTile={row:r,col:c}; }
+          } else { this.selectedTile={row:r,col:c}; }
+        }
+      }
+    };
+    const handleMove=(e)=>{
+      if(!isDragging||!this.selectedTile||this.activeBooster) return;
+      const pos=getCoords(e);
+      const dx=pos.x-startX, dy=pos.y-startY;
+      if(Math.abs(dx)>20||Math.abs(dy)>20){
+        let r2=this.selectedTile.row, c2=this.selectedTile.col;
+        if(Math.abs(dx)>Math.abs(dy)) c2+=dx>0?1:-1; else r2+=dy>0?1:-1;
+        if(r2>=0&&r2<BOARD_SIZE&&c2>=0&&c2<BOARD_SIZE){ this.trySwap(this.selectedTile.row,this.selectedTile.col,r2,c2); this.selectedTile=null; isDragging=false; }
+      }
+    };
+    const handleEnd=()=>{ isDragging=false; };
+    this.canvas.addEventListener('mousedown',handleStart);
+    this.canvas.addEventListener('mousemove',handleMove);
+    window.addEventListener('mouseup',handleEnd);
+    this.canvas.addEventListener('touchstart',handleStart,{passive:true});
+    this.canvas.addEventListener('touchmove',handleMove,{passive:true});
+    window.addEventListener('touchend',handleEnd);
+
+    const YT_URL='https://www.youtube.com/@ARNAV_KINGDOM';
+    const openYT=()=>{
+      if(window.AndroidBridge && AndroidBridge.openExternalUrl) AndroidBridge.openExternalUrl(YT_URL);
+      else window.open(YT_URL,'_blank');
+    };
+
+    document.getElementById('btn-menu-play').onclick=()=>this.navigate('levelmap');
+    document.getElementById('btn-menu-shop').onclick=()=>this.navigate('shop');
+    document.getElementById('btn-menu-settings').onclick=()=>this.navigate('settings');
+    document.getElementById('btn-menu-leaderboard').onclick=()=>this.navigate('leaderboard');
+    document.getElementById('btn-menu-subscribe').onclick=openYT;
+    document.getElementById('btn-settings-subscribe').onclick=openYT;
+
+    document.getElementById('btn-lb-back').onclick=()=>this.navigate(this.lastScreen||'menu');
+    document.getElementById('btn-lb-refresh').onclick=()=>this.renderLeaderboard();
+    document.getElementById('btn-lb-set-name').onclick=()=>this.promptDisplayName(()=>this.renderLeaderboard());
+    document.getElementById('btn-settings-change-name').onclick=()=>this.promptDisplayName();
+
+    document.getElementById('btn-map-back').onclick=()=>this.navigate('menu');
+    document.getElementById('btn-map-continue').onclick=()=>this.enterLevel(this.level);
+
+    document.getElementById('btn-shop-back').onclick=()=>this.navigate(this.lastScreen||'menu');
+    document.getElementById('btn-settings-back').onclick=()=>this.navigate(this.lastScreen||'menu');
+
+    document.getElementById('tab-boost').onclick=()=>{ this.shopTab='boost'; document.getElementById('tab-boost').classList.add('active'); document.getElementById('tab-cosmetic').classList.remove('active'); this.renderShop(); };
+    document.getElementById('tab-cosmetic').onclick=()=>{ this.shopTab='cosmetic'; document.getElementById('tab-cosmetic').classList.add('active'); document.getElementById('tab-boost').classList.remove('active'); this.renderShop(); };
+
+    document.getElementById('btn-pause').onclick=()=>document.getElementById('overlay-pause').classList.add('active');
+    document.getElementById('btn-resume').onclick=()=>document.getElementById('overlay-pause').classList.remove('active');
+    document.getElementById('btn-restart').onclick=()=>{ document.getElementById('overlay-pause').classList.remove('active'); this.enterLevel(this.level); };
+    document.getElementById('btn-pause-map').onclick=()=>{ document.getElementById('overlay-pause').classList.remove('active'); this.navigate('levelmap'); };
+    document.getElementById('btn-pause-menu').onclick=()=>{ document.getElementById('overlay-pause').classList.remove('active'); this.navigate('menu'); };
+
+    document.getElementById('btn-next-level').onclick=()=>{ document.getElementById('overlay-win').classList.remove('active'); this.enterLevel(this.level+1); };
+    document.getElementById('btn-retry').onclick=()=>{ document.getElementById('overlay-lose').classList.remove('active'); this.enterLevel(this.level); };
+    document.getElementById('btn-watch-ad-revive').onclick=()=>{ if(window.AndroidBridge && AndroidBridge.showRewarded) AndroidBridge.showRewarded('revive'); };
+    document.getElementById('btn-buy-moves').onclick=()=>{
+      if(this.coins>=100){ this.coins-=100; this.moves+=5; this.updateUI(); this.saveData(); document.getElementById('overlay-lose').classList.remove('active'); this.showToast('+5 Moves Added!'); }
+      else this.showToast('Not enough coins!');
+    };
+
+    document.getElementById('btn-achievement-continue').onclick=()=>{ document.getElementById('overlay-achievement').classList.remove('active'); this.enterLevel(this.level+1); };
+    document.getElementById('btn-achievement-share').onclick=()=>this.generateShareCard(this.lastAchievementMilestone||this.level);
+
+    document.getElementById('btn-bag').onclick=()=>{ this.renderInventory(); document.getElementById('overlay-inventory').classList.add('active'); };
+    document.getElementById('btn-close-inventory').onclick=()=>document.getElementById('overlay-inventory').classList.remove('active');
+    document.getElementById('btn-nav-shop').onclick=()=>this.navigate('shop');
+
+    document.getElementById('btn-sound-toggle').onclick=(e)=>{ audio.enabled=!audio.enabled; e.target.innerText=`🔊 SOUND: ${audio.enabled?'ON':'OFF'}`; this.saveData(); };
+    document.getElementById('btn-reset-progress').onclick=()=>{
+      if(confirm('Reset all progress? This cannot be undone.')){ localStorage.removeItem('KINGDOM_CRUSH_SAVE'); location.reload(); }
+    };
+
+    document.getElementById('btn-booster-hammer').onclick=()=>this.toggleBooster('hammer');
+    document.getElementById('btn-booster-shuffle').onclick=()=>this.useShuffleBooster();
+    document.getElementById('btn-booster-tnt').onclick=()=>this.toggleBooster('tnt');
+  }
+  
+  /* ---------- GAMEPLAY MECHANICS ---------- */
+  async trySwap(r1,c1,r2,c2){
+    if(this.isObstacle(this.board[r1][c1])||this.isObstacle(this.board[r2][c2])) return;
+    audio.playSwap();
+    this.swapBoardTiles(r1,c1,r2,c2);
+    await this.delay(200);
+    const tA=this.board[r1][c1], tB=this.board[r2][c2];
+    if(tA.type===BLOCK_TYPES.RAINBOW||tB.type===BLOCK_TYPES.RAINBOW){
+      this.decrementMove();
+      await this.handleRainbowSwap(r1,c1,r2,c2);
+      return;
+    }
+    if(tA.special && tB.special){
+      this.decrementMove();
+      await this.comboSpecials(tA,tB);
+      return;
+    }
+    /* TNT is treated the same way a special piece is when swapped — it detonates
+       immediately instead of silently doing nothing unless it happens to form a match
+       (it never can, since it's the only TNT tile of its type on the board). */
+    if(tA.special || tB.special || tA.type===BLOCK_TYPES.TNT || tB.type===BLOCK_TYPES.TNT){
+      this.decrementMove();
+      const specialTile=(tA.special||tA.type===BLOCK_TYPES.TNT)?tA:tB;
+      this.destroyTile(specialTile.row,specialTile.col);
+      await this.processCascades();
+      return;
+    }
+    const matches=this.findMatches();
+    if(matches.length>0){ this.decrementMove(); await this.processCascades(); }
+    else{ this.swapBoardTiles(r1,c1,r2,c2); }
+  }
+
+  /* ---------- RAINBOW ORB CINEMATIC ACTIVATION ----------
+     Total sequence is a fixed ~1.5s across four phases (charge → build-up → targeting →
+     release) so the Orb always feels powerful and satisfying rather than instant, while
+     never freezing the UI — the main render loop keeps running at ~60 FPS throughout
+     because every wait here is a non-blocking await, exactly like the rest of the engine. */
+  async handleRainbowSwap(r1,c1,r2,c2){
+    const rainbowTile=this.board[r1][c1].type===BLOCK_TYPES.RAINBOW?this.board[r1][c1]:this.board[r2][c2];
+    const targetTile=this.board[r1][c1].type===BLOCK_TYPES.RAINBOW?this.board[r2][c2]:this.board[r1][c1];
+    const orbRow=rainbowTile.row, orbCol=rainbowTile.col;
+    const orbPxX=orbCol*this.tileSize, orbPxY=orbRow*this.tileSize;
+
+    let mode='normal';
+    const targets=[];
+    if(targetTile.type===BLOCK_TYPES.RAINBOW){
+      mode='double';
+      for(let r=0;r<BOARD_SIZE;r++) for(let c=0;c<BOARD_SIZE;c++){
+        if(this.board[r][c] && !this.isPermanent(this.board[r][c].type) && !(r===orbRow&&c===orbCol)) targets.push({row:r,col:c});
+      }
+    } else if(targetTile.special){
+      mode='chain';
+      const targetType=targetTile.type;
+      for(let r=0;r<BOARD_SIZE;r++) for(let c=0;c<BOARD_SIZE;c++){
+        const t=this.board[r][c];
+        if(t && t.type===targetType && !(r===orbRow&&c===orbCol)) targets.push({row:r,col:c});
+      }
+    } else {
+      const targetType=targetTile.type;
+      for(let r=0;r<BOARD_SIZE;r++) for(let c=0;c<BOARD_SIZE;c++){
+        if(this.board[r][c] && this.board[r][c].type===targetType && !(r===orbRow&&c===orbCol)) targets.push({row:r,col:c});
+      }
+    }
+
+    this.inputLocked=true;
+    this.rainbowFX={ phase:'charge', orbRow, orbCol, targets:[], mode };
+    audio.playSpecial();
+
+    /* PHASE 1 — CHARGE (~0.3s): orb glows, slowly rotates, energy gathers around it. */
+    for(let i=0;i<3;i++){
+      this.spawnParticles(orbPxX+this.tileSize/2,orbPxY+this.tileSize/2,'#ffffff',3);
+      await this.delay(100);
+    }
+
+    /* PHASE 2 — ENERGY BUILD-UP (~0.4s): rainbow energy pulses outward, particles orbit,
+       the board slightly reacts/shakes, light spreads from the orb. */
+    this.rainbowFX.phase='buildup';
+    this.cameraShake=Math.max(this.cameraShake,8);
+    for(let i=0;i<4;i++){
+      const hue=Math.floor(Math.random()*360);
+      this.spawnParticles(orbPxX+this.tileSize/2,orbPxY+this.tileSize/2,`hsl(${hue},90%,65%)`,4);
+      this.shockwaves.push(new Shockwave(this.offsetX+orbPxX+this.tileSize/2,this.offsetY+orbPxY+this.tileSize/2,`hsl(${hue},90%,60%)`));
+      await this.delay(100);
+    }
+
+    /* PHASE 3 — TARGETING (~0.3s): the selected collectible type highlights, matching
+       pieces pulse, energy lines connect the Rainbow Orb to every matching piece. */
+    this.rainbowFX.phase='targeting';
+    this.rainbowFX.targets=targets;
+    audio.playSpecial();
+    await this.delay(300);
+
+    /* PHASE 4 — RELEASE (~0.5s): powerful shockwave, matching pieces disappear with
+       effects, particles play — gravity/refill only start afterward via processCascades. */
+    this.rainbowFX.phase='release';
+    this.cameraShake=mode==='double'?30:24;
+    audio.playExplode();
+    this.addScore(100,orbPxX,orbPxY);
+    this.board[orbRow][orbCol]=null;
+    this.shockwaves.push(new Shockwave(this.offsetX+orbPxX+this.tileSize/2,this.offsetY+orbPxY+this.tileSize/2,'#ffffff'));
+    targets.forEach(({row,col})=>{
+      const t=this.board[row][col]; if(!t) return;
+      this.hitJelly(row,col);
+      if(mode==='chain'){
+        if(t.special==='line') this.triggerLineSpecial(row,col,t.lineDir);
+        else if(t.special==='wrapped') this.triggerWrappedSpecial(row,col);
+        else if(t.special==='rolling') this.triggerRollingSpecial(row,col,t.rollDir);
+        this.spawnParticles(col*this.tileSize,row*this.tileSize,'#ffffff',12);
+      } else if(mode==='double'){
+        this.spawnParticles(col*this.tileSize,row*this.tileSize,`hsl(${Math.floor(Math.random()*360)},90%,65%)`,10);
+      } else {
+        this.spawnParticles(col*this.tileSize+this.tileSize/2,row*this.tileSize+this.tileSize/2,'#ffffff',10);
+      }
+      this.board[row][col]=null;
+    });
+    await this.delay(180);
+    await this.delay(320);
+    this.rainbowFX=null;
+    this.inputLocked=false;
+
+    await this.processCascades();
+  }
+
+  /* Draws the energy connecting-lines / highlight pulses / charge halo for the Rainbow
+     Orb's cinematic activation. Reads this.rainbowFX, set only during handleRainbowSwap. */
+  drawRainbowFX(ctx){
+    const fx=this.rainbowFX; if(!fx) return;
+    const orbCx=this.offsetX+fx.orbCol*this.tileSize+this.tileSize/2;
+    const orbCy=this.offsetY+fx.orbRow*this.tileSize+this.tileSize/2;
+    if(fx.phase==='charge'||fx.phase==='buildup'){
+      const pulse=0.5+0.5*Math.sin(this.animTime*10);
+      ctx.save();
+      ctx.globalAlpha=0.3+0.35*pulse;
+      ctx.strokeStyle='#ffffff'; ctx.lineWidth=4;
+      ctx.shadowColor='#ffffff'; ctx.shadowBlur=this.tileSize*0.3;
+      ctx.beginPath(); ctx.arc(orbCx,orbCy,this.tileSize*(0.45+0.18*pulse),0,Math.PI*2); ctx.stroke();
+      ctx.restore();
+    }
+    if(fx.phase==='targeting' && fx.targets && fx.targets.length){
+      const pulse=0.5+0.5*Math.sin(this.animTime*8);
+      ctx.save();
+      fx.targets.forEach(({row,col})=>{
+        const tx=this.offsetX+col*this.tileSize+this.tileSize/2, ty=this.offsetY+row*this.tileSize+this.tileSize/2;
+        ctx.strokeStyle=`rgba(255,255,255,${0.25+0.4*pulse})`;
+        ctx.lineWidth=2.5; ctx.shadowColor='#ffffff'; ctx.shadowBlur=6;
+        ctx.beginPath(); ctx.moveTo(orbCx,orbCy); ctx.lineTo(tx,ty); ctx.stroke();
+        ctx.shadowBlur=0;
+        ctx.globalAlpha=0.3+0.45*pulse;
+        ctx.strokeStyle='#ffffff'; ctx.lineWidth=3;
+        ctx.strokeRect(tx-this.tileSize/2+3,ty-this.tileSize/2+3,this.tileSize-6,this.tileSize-6);
+        ctx.globalAlpha=1;
+      });
+      ctx.restore();
+    }
+  }
+
+  isObstacle(tile){ if(!tile) return false; return [BLOCK_TYPES.STONE,BLOCK_TYPES.ICE,BLOCK_TYPES.OBSIDIAN,BLOCK_TYPES.FENCE,BLOCK_TYPES.COBWEB,BLOCK_TYPES.VOID].includes(tile.type); }
+  /* Wooden Fence (and legacy Obsidian) are truly permanent — no match, special, or
+     booster effect can ever remove them. Cobweb is NOT permanent: it is handled
+     separately (see damageOrBlockCell / damageNeighbors) so it can be cleared fairly.
+     Void cells (used for shaped boards) are likewise permanent — they are empty
+     board gaps, not something a player can ever clear or fill. */
+  isPermanent(type){ return type===BLOCK_TYPES.OBSIDIAN || type===BLOCK_TYPES.FENCE || type===BLOCK_TYPES.VOID; }
+
+  /* Central helper used by every area-effect (Line/Wrapped/Rolling specials, TNT,
+     Creeper, combos, boosters) to resolve what happens to a single cell it reaches:
+     - Permanent obstacles block the effect and show a small "blocked" spark so the
+       player understands the effect could not get through — they are NEVER destroyed.
+     - Cobwebs are torn through instantly by big area effects (satisfying, and keeps
+       specials feeling powerful) — see damageNeighbors for the softer multi-hit rule
+       that applies to ordinary adjacent matches instead.
+     - Everything else is cleared normally. */
+  damageOrBlockCell(r,c,color='#ffffff',count=10){
+    const t=this.board[r] && this.board[r][c];
+    if(!t) return;
+    if(this.isPermanent(t.type)){
+      this.spawnParticles(c*this.tileSize+this.tileSize/2,r*this.tileSize+this.tileSize/2,'#8a6d3b',5);
+      return;
+    }
+    if(t.type===BLOCK_TYPES.COBWEB){
+      this.spawnParticles(c*this.tileSize+this.tileSize/2,r*this.tileSize+this.tileSize/2,'#e8e8ee',10);
+      this.board[r][c]=null;
+      return;
+    }
+    /* Chain reaction: a TNT block caught inside another effect's blast radius detonates
+       too, instead of silently disappearing. Safe from infinite loops — the tile is
+       nulled before re-triggering, so it can never be re-hit by its own explosion. */
+    if(t.type===BLOCK_TYPES.TNT){
+      this.board[r][c]=null;
+      this.hitJelly(r,c);
+      this.triggerTNT(r,c);
+      return;
+    }
+    this.hitJelly(r,c);
+    this.spawnParticles(c*this.tileSize,r*this.tileSize,color,count);
+    this.trackCollected(t.type);
+    this.board[r][c]=null;
+  }
+
+  findMatches(){
+    let matchedTiles=new Set();
+    for(let r=0;r<BOARD_SIZE;r++){
+      let matchLen=1;
+      for(let c=0;c<BOARD_SIZE;c++){
+        let checkNext=false;
+        if(c<BOARD_SIZE-1){ const cur=this.board[r][c], next=this.board[r][c+1]; if(cur&&next&&!this.isObstacle(cur)&&cur.type===next.type){ matchLen++; checkNext=true; } }
+        if(!checkNext){ if(matchLen>=3){ for(let k=0;k<matchLen;k++) matchedTiles.add(this.board[r][c-k]); } matchLen=1; }
+      }
+    }
+    for(let c=0;c<BOARD_SIZE;c++){
+      let matchLen=1;
+      for(let r=0;r<BOARD_SIZE;r++){
+        let checkNext=false;
+        if(r<BOARD_SIZE-1){ const cur=this.board[r][c], next=this.board[r+1][c]; if(cur&&next&&!this.isObstacle(cur)&&cur.type===next.type){ matchLen++; checkNext=true; } }
+        if(!checkNext){ if(matchLen>=3){ for(let k=0;k<matchLen;k++) matchedTiles.add(this.board[r-k][c]); } matchLen=1; }
+      }
+    }
+    return Array.from(matchedTiles);
+  }
+
+  async processCascades(){
+    let comboCounter=1;
+    /* Always resolve holes first — covers specials/boosters that clear tiles outside a fresh 3-match. */
+    await this.applyGravity();
+    await this.refillBoard();
+    while(true){
+      let matches=this.findMatches();
+      if(matches.length===0) break;
+      audio.playMatch();
+      matches.forEach(t=>this.hitJelly(t.row,t.col));
+      const createdSpecials=this.detectSpecialCreations(matches);
+      for(let tile of matches){ if(createdSpecials.has(tile)) continue; this.destroyTile(tile.row,tile.col); }
+      for(let [tile,info] of createdSpecials){
+        if(info.kind==='rainbow'){
+          this.board[tile.row][tile.col]={ type:BLOCK_TYPES.RAINBOW, row:tile.row, col:tile.col, x:tile.col*this.tileSize, y:tile.row*this.tileSize, targetX:tile.col*this.tileSize, targetY:tile.row*this.tileSize, scale:1, alpha:1 };
+          this.spawnParticles(tile.col*this.tileSize,tile.row*this.tileSize,'#ffffff',26);
+        } else {
+          const baseType=tile.type;
+          this.board[tile.row][tile.col]={ type:baseType, special:info.kind, lineDir:info.dir, rollDir:info.dir, row:tile.row, col:tile.col, x:tile.col*this.tileSize, y:tile.row*this.tileSize, targetX:tile.col*this.tileSize, targetY:tile.row*this.tileSize, scale:1, alpha:1 };
+          this.spawnParticles(tile.col*this.tileSize,tile.row*this.tileSize,'#ffff55',20);
+        }
+      }
+      const swColor=comboCounter>1?'#ffd166':this.currentBiome.accent;
+      matches.forEach(t=>this.shockwaves.push(new Shockwave(this.offsetX+t.col*this.tileSize+this.tileSize/2,this.offsetY+t.row*this.tileSize+this.tileSize/2,swColor)));
+      const matchAura=this.getAuraTheme();
+      if(matchAura){
+        const ac=matchAura.dual?(Math.random()<0.5?matchAura.colors[0]:matchAura.colors[1]):matchAura.colors[0];
+        matches.forEach(t=>{ if(Math.random()<0.5) this.spawnParticles(t.col*this.tileSize+this.tileSize/2,t.row*this.tileSize+this.tileSize/2,ac,2+Math.min(4,matchAura.tier)); });
+      }
+      const baseScore=matches.length*20*comboCounter;
+      this.addScore(baseScore, matches[0].col*this.tileSize, matches[0].row*this.tileSize, comboCounter>1?`COMBO x${comboCounter}!`:null, comboCounter>1);
+      await this.delay(250);
+      await this.applyGravity();
+      await this.refillBoard();
+      comboCounter++;
+      await this.delay(200);
+    }
+    this.checkGameState();
+  }
+
+  /* Groups matched tiles of the same type into connected clusters and measures their shape
+     (longest straight run in each direction) to decide which special piece, if any, they create. */
+  computeClusterShape(cluster){
+    const rowGroups={}, colGroups={};
+    cluster.forEach(t=>{ (rowGroups[t.row]=rowGroups[t.row]||[]).push(t.col); (colGroups[t.col]=colGroups[t.col]||[]).push(t.row); });
+    const bestRun=(arr)=>{
+      arr=arr.slice().sort((a,b)=>a-b);
+      let bestStart=arr[0],bestLen=1,curStart=arr[0],curLen=1;
+      for(let i=1;i<arr.length;i++){
+        if(arr[i]===arr[i-1]+1){ curLen++; } else { curStart=arr[i]; curLen=1; }
+        if(curLen>bestLen){ bestLen=curLen; bestStart=curStart; }
+      }
+      return {start:bestStart,len:bestLen};
+    };
+    let maxH=0,hRow=null; let maxV=0,vCol=null;
+    Object.keys(rowGroups).forEach(rowKey=>{ const run=bestRun(rowGroups[rowKey]); if(run.len>maxH){ maxH=run.len; hRow=+rowKey; } });
+    Object.keys(colGroups).forEach(colKey=>{ const run=bestRun(colGroups[colKey]); if(run.len>maxV){ maxV=run.len; vCol=+colKey; } });
+    return { size:cluster.length, maxH, maxV, hRow, vCol };
+  }
+
+  detectSpecialCreations(matches){
+    const specialMap=new Map();
+    const matchSet=new Set(matches);
+    const visited=new Set();
+    for(const seed of matches){
+      if(visited.has(seed) || seed.special || seed.type===BLOCK_TYPES.RAINBOW) continue;
+      const cluster=[]; const stack=[seed]; visited.add(seed);
+      while(stack.length){
+        const t=stack.pop(); cluster.push(t);
+        [[-1,0],[1,0],[0,-1],[0,1]].forEach(([dr,dc])=>{
+          const nr=t.row+dr, nc=t.col+dc;
+          const nb=this.board[nr] && this.board[nr][nc];
+          if(nb && matchSet.has(nb) && !visited.has(nb) && nb.type===seed.type && !nb.special){
+            visited.add(nb); stack.push(nb);
+          }
+        });
+      }
+      const shape=this.computeClusterShape(cluster);
+      const rep=cluster.find(t=>t.row===shape.hRow && t.col===shape.vCol) || cluster[Math.floor(cluster.length/2)];
+      /* PRIORITY: 5 identical pieces in a straight line ALWAYS creates the Rainbow Orb —
+         checked before any Wrapped/Toffee pattern so a straight 5-match can never be
+         downgraded into a Wrapped Special. */
+      if(shape.maxH>=5 || shape.maxV>=5){
+        specialMap.set(cluster[Math.floor(cluster.length/2)],{kind:'rainbow'});
+      }
+      /* L/T-shaped cluster: a horizontal run of 3+ crossing a vertical run of 3+. */
+      else if(shape.maxH>=3 && shape.maxV>=3 && shape.size>=5){
+        if(shape.size>=6) specialMap.set(rep,{kind:'rolling', dir:Math.random()<0.5?'h':'v'});
+        else specialMap.set(rep,{kind:'wrapped'});
+      }
+      /* Modern match-3 system: any other complex 5+ piece cluster that is NOT a
+         straight line and NOT a clean L/T cross (e.g. plus-shapes, staggered/zig-zag
+         formations, or other irregular blobs) still forms a valid Wrapped Special. */
+      else if(shape.size>=5){
+        specialMap.set(cluster[Math.floor(cluster.length/2)],{kind:'wrapped'});
+      }
+      else if(shape.maxH===4 || shape.maxV===4){
+        specialMap.set(cluster[Math.floor(cluster.length/2)],{kind:'line', dir:shape.maxH===4?'row':'col'});
+      }
+    }
+    return specialMap;
+  }
+
+  destroyTile(r,c){
+    const tile=this.board[r][c]; if(!tile) return;
+    /* Permanent cells (Obsidian, Fence, and board-shape Void gaps) can never be
+       destroyed by any path, including boosters like the Hammer — matches the
+       documented guarantee in isPermanent(). */
+    if(this.isPermanent(tile.type)) return;
+    if(tile.type===BLOCK_TYPES.TNT){ this.board[r][c]=null; this.hitJelly(r,c); this.triggerTNT(r,c); return; }
+    else if(tile.type===BLOCK_TYPES.CREEPER) this.triggerCreeper(r,c);
+    else if(tile.type===BLOCK_TYPES.LIGHTNING) this.triggerLightning(r,c);
+    else if(tile.special==='line') this.triggerLineSpecial(r,c,tile.lineDir);
+    else if(tile.special==='wrapped') this.triggerWrappedSpecial(r,c);
+    else if(tile.special==='rolling') this.triggerRollingSpecial(r,c,tile.rollDir);
+    this.damageNeighbors(r,c);
+    this.spawnParticles(c*this.tileSize+this.tileSize/2,r*this.tileSize+this.tileSize/2,'#ffffff',12);
+    this.trackCollected(tile.type);
+    this.board[r][c]=null;
+  }
+  
+  /* ---------- LEVEL OBJECTIVE TRACKING ----------
+     Called from every real tile-removal path (normal destroyTile and the
+     damageOrBlockCell area-effect path) so "collect N of a color" objectives count
+     a piece however it was actually cleared — match, special, TNT, or booster. */
+  trackCollected(type){
+    if(type===undefined||type===null) return;
+    if(type<10){ // plain collectible colors: COAL..AMETHYST
+      this.collectedCounts[type]=(this.collectedCounts[type]||0)+1;
+    }
+  }
+
+  /* ---------- SPECIAL PIECE ACTIVATIONS ---------- */
+  triggerLineSpecial(r,c,dir)
+    audio.playSpecial(); this.cameraShake=12;
+    const auraL=this.getAuraTheme();
+    if(auraL){ const ac=auraL.dual?(Math.random()<0.5?auraL.colors[0]:auraL.colors[1]):auraL.colors[0]; this.spawnParticles(c*this.tileSize+this.tileSize/2,r*this.tileSize+this.tileSize/2,ac,3+Math.min(3,auraL.tier)); }
+    if(dir==='col'){
+      for(let rr=0;rr<BOARD_SIZE;rr++){ this.damageOrBlockCell(rr,c,'#fff6c2',10); }
+    } else {
+      for(let cc=0;cc<BOARD_SIZE;cc++){ this.damageOrBlockCell(r,cc,'#fff6c2',10); }
+    }
+  }
+  triggerWrappedSpecial(r,c){
+    audio.playExplode(); this.cameraShake=16;
+    const auraW=this.getAuraTheme();
+    if(auraW){ const ac=auraW.dual?(Math.random()<0.5?auraW.colors[0]:auraW.colors[1]):auraW.colors[0]; this.spawnParticles(c*this.tileSize+this.tileSize/2,r*this.tileSize+this.tileSize/2,ac,4+Math.min(4,auraW.tier)); }
+    for(let dr=-2;dr<=2;dr++) for(let dc=-2;dc<=2;dc++){
+      const nr=r+dr, nc=c+dc;
+      if(nr>=0&&nr<BOARD_SIZE&&nc>=0&&nc<BOARD_SIZE){ this.damageOrBlockCell(nr,nc,'#ffb347',12); }
+    }
+  }
+  triggerRollingSpecial(r,c,dir){
+    audio.playSpecial(); this.cameraShake=10;
+    if(dir==='h'){
+      for(let cc=0;cc<BOARD_SIZE;cc++){
+        const t=this.board[r][cc];
+        if(t && this.isPermanent(t.type)){ const px=cc*this.tileSize, py=r*this.tileSize; setTimeout(()=>this.spawnParticles(px+this.tileSize/2,py+this.tileSize/2,'#8a6d3b',5),cc*30); }
+        else if(t){ this.board[r][cc]=null; const px=cc*this.tileSize, py=r*this.tileSize; const col=t.type===BLOCK_TYPES.COBWEB?'#e8e8ee':'#ffdd55'; setTimeout(()=>this.spawnParticles(px,py,col,14),cc*30); }
+      }
+    } else {
+      for(let rr=0;rr<BOARD_SIZE;rr++){
+        const t=this.board[rr][c];
+        if(t && this.isPermanent(t.type)){ const px=c*this.tileSize, py=rr*this.tileSize; setTimeout(()=>this.spawnParticles(px+this.tileSize/2,py+this.tileSize/2,'#8a6d3b',5),rr*30); }
+        else if(t){ this.board[rr][c]=null; const px=c*this.tileSize, py=rr*this.tileSize; const col=t.type===BLOCK_TYPES.COBWEB?'#e8e8ee':'#ffdd55'; setTimeout(()=>this.spawnParticles(px,py,col,14),rr*30); }
+      }
+    }
+  }
+
+  /* Two specials swapped directly into each other trigger a combined effect. */
+  async comboSpecials(t1,t2){
+    audio.playSpecial(); this.cameraShake=20;
+    const r=t2.row, c=t2.col;
+    const clearRow=(rr)=>{ for(let cc=0;cc<BOARD_SIZE;cc++){ this.damageOrBlockCell(rr,cc,'#ffe9a8',10); } };
+    const clearCol=(cc)=>{ for(let rr=0;rr<BOARD_SIZE;rr++){ this.damageOrBlockCell(rr,cc,'#ffe9a8',10); } };
+    const explode=(rr,cc,radius)=>{ for(let dr=-radius;dr<=radius;dr++) for(let dc=-radius;dc<=radius;dc++){ const nr=rr+dr,nc=cc+dc; if(nr>=0&&nr<BOARD_SIZE&&nc>=0&&nc<BOARD_SIZE){ this.damageOrBlockCell(nr,nc,'#ff9d4d',10); } } };
+    if(t1.special==='line' && t2.special==='line'){
+      clearRow(t1.row); clearCol(t1.col); clearRow(t2.row); clearCol(t2.col);
+    } else if(t1.special==='wrapped' && t2.special==='wrapped'){
+      explode(r,c,3);
+    } else if((t1.special==='line'&&t2.special==='wrapped')||(t1.special==='wrapped'&&t2.special==='line')){
+      clearRow(r); clearCol(c); explode(r,c,1);
+    } else {
+      this.triggerRollingSpecial(t1.row,t1.col,t1.rollDir||'h');
+      this.triggerRollingSpecial(t2.row,t2.col,t2.rollDir||'v');
+    }
+    if(this.board[t1.row][t1.col]) this.board[t1.row][t1.col]=null;
+    if(this.board[t2.row][t2.col]) this.board[t2.row][t2.col]=null;
+    await this.processCascades();
+  }
+
+  /* Ordinary adjacent matches "chip" an obstacle rather than obliterating it outright —
+     this is the fair, multi-hit rule for Cobweb (2 hits to clear). Wooden Fence/Obsidian
+     never take damage here at all, matching their permanent status. */
+  damageNeighbors(r,c){
+    const dirs=[[-1,0],[1,0],[0,-1],[0,1]];
+    dirs.forEach(([dr,dc])=>{
+      const nr=r+dr, nc=c+dc;
+      if(nr>=0&&nr<BOARD_SIZE&&nc>=0&&nc<BOARD_SIZE){
+        const neighbor=this.board[nr][nc];
+        if(neighbor){
+          if(neighbor.type===BLOCK_TYPES.ICE){ this.board[nr][nc]=null; this.spawnParticles(nc*this.tileSize,nr*this.tileSize,'#a0d8ef',10); }
+          else if(neighbor.type===BLOCK_TYPES.STONE){ this.board[nr][nc]=null; this.spawnParticles(nc*this.tileSize,nr*this.tileSize,'#5a5a5a',10); }
+          else if(neighbor.type===BLOCK_TYPES.COBWEB){
+            neighbor.webHealth=(neighbor.webHealth||2)-1;
+            if(neighbor.webHealth<=0){ this.board[nr][nc]=null; this.spawnParticles(nc*this.tileSize,nr*this.tileSize,'#f2f2f7',14); }
+            else { this.spawnParticles(nc*this.tileSize+this.tileSize/2,nr*this.tileSize+this.tileSize/2,'#d8d8e2',6); }
+          }
+        }
+      }
+    });
+  }
+
+  triggerTNT(r,c){
+    audio.playExplode(); this.cameraShake=22;
+    const cx=c*this.tileSize+this.tileSize/2, cy=r*this.tileSize+this.tileSize/2;
+    // Fuse spark + double shockwave punch so the blast reads as powerful and satisfying.
+    this.spawnParticles(cx,cy,'#fff6c2',6);
+    this.shockwaves.push(new Shockwave(this.offsetX+cx,this.offsetY+cy,'#ff2200'));
+    this.shockwaves.push(new Shockwave(this.offsetX+cx,this.offsetY+cy,'#ffaa33'));
+    const aura=this.getAuraTheme();
+    if(aura){ const ac=aura.dual?(Math.random()<0.5?aura.colors[0]:aura.colors[1]):aura.colors[0]; this.spawnParticles(cx,cy,ac,4+aura.tier); }
+    // Meaningful 3x3 blast radius. damageOrBlockCell already handles chained TNT,
+    // permanent obstacles (blocked, never destroyed), cobwebs, and jelly correctly.
+    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+      const nr=r+dr, nc=c+dc;
+      if(nr>=0&&nr<BOARD_SIZE&&nc>=0&&nc<BOARD_SIZE){ this.damageOrBlockCell(nr,nc,'#ff2200',15); }
+    }
+  }
+  triggerCreeper(r,c){
+    audio.playExplode(); this.cameraShake=20;
+    for(let i=0;i<BOARD_SIZE;i++){
+      this.damageOrBlockCell(r,i,'#ff6a4d',10);
+      this.damageOrBlockCell(i,c,'#ff6a4d',10);
+    }
+  }
+  triggerLightning(r,c){
+    audio.playSpecial();
+    for(let i=0;i<BOARD_SIZE;i++){ if(this.board[r][i]) this.board[r][i]=null; }
+  }
+
+  /* Wooden Fence (and Obsidian) are permanently fixed obstacles — gravity must
+     completely ignore those cells: they never fall, slide, or get compacted like a
+     normal tile. Cells above/below a fence still fall and stack normally, they just
+     never pass through or displace the fence itself. */
+  async applyGravity(){
+    for(let c=0;c<BOARD_SIZE;c++){
+      let emptyRow=BOARD_SIZE-1;
+      for(let r=BOARD_SIZE-1;r>=0;r--){
+        const cell=this.board[r][c];
+        if(cell && this.isPermanent(cell.type)){
+          // Fixed wall: stays exactly in this cell. Compaction resumes just above it.
+          emptyRow=r-1;
+          continue;
+        }
+        if(cell!==null){
+          if(r!==emptyRow){ this.board[emptyRow][c]=cell; cell.row=emptyRow; this.board[r][c]=null; }
+          emptyRow--;
+        }
+      }
+    }
+  }
+
+  async refillBoard(){
+    const maxColorIndex=this.getMaxColorIndex();
+    for(let c=0;c<BOARD_SIZE;c++){
+      for(let r=0;r<BOARD_SIZE;r++){
+        if(this.board[r][c]===null){
+          const newType=Math.floor(Math.random()*(maxColorIndex+1));
+          this.board[r][c]={ type:newType, row:r, col:c, x:c*this.tileSize, y:-this.tileSize*(BOARD_SIZE-r), targetX:c*this.tileSize, targetY:r*this.tileSize, scale:1, alpha:1 };
+        }
+      }
+    }
+  }
+
+  decrementMove(){ this.moves--; this.updateUI(); }
+
+  addScore(amount,x,y,label=null,big=false){
+    const mult=(this.owned.beacon?1.1:1)*(this.scoreMultiplierTemp||1);
+    amount=Math.round(amount*mult);
+    this.score+=amount;
+    this.updateUI();
+    const displayText=label?`${label} +${amount}`:`+${amount}`;
+    this.floatingTexts.push(new FloatingText(this.offsetX+x+10,this.offsetY+y,displayText,label?'#ffd166':'#ffffff',big));
+  }
+
+  spawnParticles(x,y,color,count=10){ for(let i=0;i<count;i++) this.particles.push(new Particle(this.offsetX+x,this.offsetY+y,color)); }
+
+  /* Lightweight, per-biome ambient particle (ONE particle per tick, same cadence as
+     before — no extra draw-call cost) so each biome reads as a real Minecraft-inspired
+     environment instead of a plain color swap. If an Aura is equipped its color(s)
+     progressively take over the ambient particle tint, on top of the biome's own motion. */
+  spawnBiomeAmbient(aura){
+    const vibe=this.currentBiome.vibe||'grass';
+    const boardW=BOARD_SIZE*this.tileSize;
+    let color = aura ? (aura.dual?(Math.random()<0.5?aura.colors[0]:aura.colors[1]):aura.colors[Math.floor(Math.random()*aura.colors.length)]) : this.currentBiome.particle;
+    let px,py,p;
+    const sizeBoost=aura?aura.tier*0.12:0;
+    switch(vibe){
+      case 'snow':
+        px=Math.random()*boardW; py=-10;
+        p=new Particle(this.offsetX+px,this.offsetY+py,color);
+        p.vy=Math.random()*0.8+0.6; p.vx=(Math.random()-0.5)*0.5; p.gravity=0; p.decay=0.006; p.size=Math.random()*2.5+2+sizeBoost;
+        break;
+      case 'sand':
+        px=Math.random()*boardW; py=BOARD_SIZE*this.tileSize-Math.random()*this.tileSize*1.5;
+        p=new Particle(this.offsetX+px,this.offsetY+py,color);
+        p.vy=(Math.random()-0.5)*0.3; p.vx=(Math.random()<0.5?-1:1)*(Math.random()*1.2+0.5); p.gravity=0; p.decay=0.014; p.size=Math.random()*2+1.5+sizeBoost;
+        break;
+      case 'leaf':
+        px=Math.random()*boardW; py=-10;
+        p=new Particle(this.offsetX+px,this.offsetY+py,color);
+        p.vy=Math.random()*0.6+0.3; p.vx=Math.sin(this.animTime*2+px)*0.7; p.gravity=0; p.decay=0.007; p.size=Math.random()*3+2.5+sizeBoost;
+        break;
+      case 'petal':
+        px=Math.random()*boardW; py=-10;
+        p=new Particle(this.offsetX+px,this.offsetY+py,color);
+        p.vy=Math.random()*0.5+0.25; p.vx=Math.sin(this.animTime*1.4+px)*1.1; p.gravity=0; p.decay=0.006; p.size=Math.random()*3+2.5+sizeBoost;
+        break;
+      case 'bubble':
+        px=Math.random()*boardW; py=BOARD_SIZE*this.tileSize+10;
+        p=new Particle(this.offsetX+px,this.offsetY+py,color);
+        p.vy=-(Math.random()*0.7+0.3); p.vx=Math.sin(this.animTime*3+px)*0.4; p.gravity=0; p.decay=0.012; p.size=Math.random()*2.5+2+sizeBoost;
+        break;
+      case 'drip':
+        if(Math.random()<0.35) return; // occasional single droplet, not constant rain
+        px=Math.random()*boardW; py=-10;
+        p=new Particle(this.offsetX+px,this.offsetY+py,color);
+        p.vy=Math.random()*2.5+2; p.vx=0; p.gravity=0.05; p.decay=0.02; p.size=Math.random()*2+2+sizeBoost;
+        break;
+      case 'ember':
+        px=Math.random()*boardW; py=BOARD_SIZE*this.tileSize+10;
+        p=new Particle(this.offsetX+px,this.offsetY+py,color);
+        p.vy=-(Math.random()*1.8+0.8); p.vx=(Math.random()-0.5)*1.0; p.gravity=-0.01; p.decay=0.012; p.size=Math.random()*3+2+sizeBoost;
+        break;
+      case 'spore':
+        px=Math.random()*boardW; py=BOARD_SIZE*this.tileSize*Math.random();
+        p=new Particle(this.offsetX+px,this.offsetY+py,color);
+        p.vy=-(Math.random()*0.5+0.15); p.vx=Math.sin(this.animTime*1.2+px)*0.5; p.gravity=0; p.decay=0.007; p.size=Math.random()*3+2+sizeBoost;
+        break;
+      default: // 'grass' and fallback
+        px=Math.random()*boardW; py=BOARD_SIZE*this.tileSize+10;
+        p=new Particle(this.offsetX+px,this.offsetY+py,color);
+        p.vy=-(Math.random()*1.4+0.4); p.vx=(Math.random()-0.5)*0.6; p.gravity=0; p.decay=0.008; p.size=Math.random()*3+2+sizeBoost;
+    }
+    this.particles.push(p);
+  }
+  
+  /* ---------- BOOSTERS ---------- */
+  placeSpecial(r,c,type){
+    this.board[r][c]={ type, row:r, col:c, x:c*this.tileSize, y:r*this.tileSize, targetX:c*this.tileSize, targetY:r*this.tileSize, scale:1, alpha:1 };
+  }
+  finishBoosterUse(){
+    const btn=document.getElementById(`btn-booster-${this.activeBooster}`);
+    if(btn) btn.classList.remove('active');
+    this.activeBooster=null;
+    this.updateUI();
+  }
+  toggleBooster(booster){
+    if((this.boosters[booster]||0)<=0){ this.showToast(`No ${booster} left! Buy in Shop.`); return; }
+    if(this.activeBooster===booster){ this.activeBooster=null; const b=document.getElementById(`btn-booster-${booster}`); if(b) b.classList.remove('active'); }
+    else{
+      if(this.activeBooster){ const b=document.getElementById(`btn-booster-${this.activeBooster}`); if(b) b.classList.remove('active'); }
+      this.activeBooster=booster; this.enderFirst=null;
+      const b=document.getElementById(`btn-booster-${booster}`); if(b) b.classList.add('active');
+      this.showToast(`Tap a block to use ${booster.toUpperCase()}`);
+    }
+    document.getElementById('overlay-inventory').classList.remove('active');
+  }
+
+  useBooster(r,c){
+    if(!this.activeBooster) return;
+    const b=this.activeBooster;
+    if(b==='hammer'){ this.destroyTile(r,c); this.boosters.hammer--; this.showToast('Hammer Used!'); this.finishBoosterUse(); this.saveData(); this.processCascades(); }
+    else if(b==='tnt'){ this.placeSpecial(r,c,BLOCK_TYPES.TNT); this.boosters.tnt--; this.showToast('TNT Placed!'); this.finishBoosterUse(); this.saveData(); }
+    else if(b==='megatnt'){
+      audio.playExplode(); this.cameraShake=20;
+      for(let dr=-2;dr<=2;dr++) for(let dc=-2;dc<=2;dc++){
+        const nr=r+dr,nc=c+dc;
+        if(nr>=0&&nr<BOARD_SIZE&&nc>=0&&nc<BOARD_SIZE&&this.board[nr][nc]&&!this.isPermanent(this.board[nr][nc].type)){ this.board[nr][nc]=null; this.spawnParticles(nc*this.tileSize,nr*this.tileSize,'#ff4d3d',14); }
+      }
+      this.boosters.megatnt--; this.showToast('Mega TNT Detonated!'); this.finishBoosterUse(); this.saveData(); this.processCascades();
+    }
+    else if(b==='mace'){
+      for(let dr=0;dr<=1;dr++) for(let dc=0;dc<=1;dc++){ const nr=r+dr,nc=c+dc; if(nr<BOARD_SIZE&&nc<BOARD_SIZE&&this.board[nr][nc]) this.destroyTile(nr,nc); }
+      this.boosters.mace--; this.showToast('Mace Smash!'); this.finishBoosterUse(); this.saveData(); this.processCascades();
+    }
+    else if(b==='trident'){
+      for(let rr=0;rr<BOARD_SIZE;rr++){ if(this.board[rr][c]) this.destroyTile(rr,c); }
+      this.boosters.trident--; this.showToast('Trident Column Clear!'); this.finishBoosterUse(); this.saveData(); this.processCascades();
+    }
+    else if(b==='crossbow'){
+      const dirs=[[0,0],[-1,0],[1,0],[0,-1],[0,1]];
+      dirs.forEach(([dr,dc])=>{ const nr=r+dr,nc=c+dc; if(nr>=0&&nr<BOARD_SIZE&&nc>=0&&nc<BOARD_SIZE&&this.board[nr][nc]) this.destroyTile(nr,nc); });
+      this.boosters.crossbow--; this.showToast('Crossbow Shot!'); this.finishBoosterUse(); this.saveData(); this.processCascades();
+    }
+    else if(b==='rainbowplace'){ this.placeSpecial(r,c,BLOCK_TYPES.RAINBOW); this.boosters.rainbowplace--; this.showToast('Rainbow Block Placed!'); this.finishBoosterUse(); this.saveData(); }
+    else if(b==='enderpearl'){
+      if(!this.enderFirst){ this.enderFirst={r,c}; this.showToast('Ender Pearl: pick a target block'); }
+      else{
+        this.swapBoardTiles(this.enderFirst.r,this.enderFirst.c,r,c);
+        this.enderFirst=null; this.boosters.enderpearl--;
+        this.showToast('Ender Pearl Swap!'); this.finishBoosterUse(); this.saveData(); this.processCascades();
+      }
+    }
+  }
+
+  useShuffleBooster(){
+    if((this.boosters.shuffle||0)<=0){ this.showToast('No shuffles left!'); return; }
+    this.boosters.shuffle--; this.generatePlayableBoard(); this.updateUI(); this.saveData();
+    this.showToast('Board Shuffled!');
+    document.getElementById('overlay-inventory').classList.remove('active');
+  }
+
+  /* ---------- SHOP ---------- */
+  applyInstant(item){
+    switch(item.id){
+      case 'extraMoves': this.moves+=5; break;
+      case 'goldenApple': this.moves+=3; break;
+      case 'enchantedApple': this.moves+=8; this.scoreMultiplierTemp=(this.scoreMultiplierTemp||1)*2; break;
+      case 'timeFreeze': this.moves+=6; break;
+      case 'doubleCoins': this.doubleCoinsActive=true; this.showToast('Double Coins active for your next win!'); break;
+      case 'comboBooster': this.scoreMultiplierTemp=(this.scoreMultiplierTemp||1)*1.5; break;
+      case 'luckyBlock': { const r=50+Math.floor(Math.random()*250); this.coins+=r; this.showToast(`Lucky Block: +${r} coins!`); break; }
+      case 'mysteryChest': {
+        if(Math.random()<0.5){ const r=80+Math.floor(Math.random()*200); this.coins+=r; this.showToast(`Mystery Chest: +${r} coins!`); }
+        else{ this.boosters.hammer=(this.boosters.hammer||0)+1; this.showToast('Mystery Chest: +1 Hammer!'); }
+        break;
+      }
+      case 'treasureCompass': { const r=60+Math.floor(Math.random()*140); this.coins+=r; this.showToast(`Compass found +${r} coins!`); break; }
+    }
+    this.updateUI();
+  }
+
+  equipItem(item){
+    if(!item.apply) { this.showToast(`${item.name} collected!`); return; }
+    this.cosmetics[item.apply.type]=item.apply.value;
+    this.saveData();
+    this.applyCosmetics();
+    this.refreshMenu();
+    this.showToast(`${item.name} equipped!`);
+  }
+
+  buyItem(id){
+    const item=SHOP_ITEMS.find(i=>i.id===id); if(!item) return;
+    const owned=this.owned[id];
+    if(item.cat==='cosmetic'){
+      if(owned){ this.equipItem(item); this.renderShop(); return; }
+      if(this.coins<item.price){ this.showToast('Not enough coins!'); return; }
+      this.coins-=item.price; this.owned[id]=true;
+      this.saveData(); this.equipItem(item); this.renderShop(); this.updateUI();
+      return;
+    }
+    if(item.passive){
+      if(owned){ this.showToast(`${item.name} already active!`); return; }
+      if(this.coins<item.price){ this.showToast('Not enough coins!'); return; }
+      this.coins-=item.price; this.owned[id]=true;
+      this.saveData(); this.renderShop(); this.updateUI();
+      this.showToast(`${item.name} activated permanently!`);
+      return;
+    }
+    if(item.instant){
+      if(this.coins<item.price){ this.showToast('Not enough coins!'); return; }
+      this.coins-=item.price; this.applyInstant(item);
+      this.saveData(); this.renderShop(); this.updateUI();
+      return;
+    }
+    if(this.coins<item.price){ this.showToast('Not enough coins!'); return; }
+    this.coins-=item.price; this.boosters[id]=(this.boosters[id]||0)+1;
+    this.saveData(); this.renderShop(); this.updateUI();
+    this.showToast(`Purchased ${item.name}!`);
+  }
+
+  renderShop(){
+    document.getElementById('shop-coins').innerText=this.coins;
+    document.getElementById('map-coins') && (document.getElementById('map-coins').innerText=this.coins);
+    const list=document.getElementById('shop-list');
+    list.innerHTML='';
+    const filtered=SHOP_ITEMS.filter(i=>i.cat===this.shopTab);
+    filtered.forEach(item=>{
+      const owned=this.owned[item.id];
+      const isCosmetic=item.cat==='cosmetic';
+      const equipped=isCosmetic && item.apply && this.cosmetics[item.apply.type]===item.apply.value;
+      const count=this.boosters[item.id]||0;
+      const showCount = !isCosmetic && !item.instant && !item.passive && count>0;
+      const row=document.createElement('div');
+      row.className='shop-item-card';
+      let btnLabel, btnClass='';
+      if(isCosmetic && !item.apply){ btnLabel = owned ? 'OWNED' : `${item.price} 🪙`; btnClass = owned ? 'equipped' : ''; }
+      else if(isCosmetic){ btnLabel = owned ? (equipped?'EQUIPPED':'EQUIP') : `${item.price} 🪙`; btnClass = owned ? (equipped?'equipped':'equip') : ''; }
+      else if(item.passive){ btnLabel = owned ? 'OWNED' : `${item.price} 🪙`; btnClass = owned ? 'equipped' : ''; }
+      else { btnLabel = `${item.price} 🪙`; }
+      const showAdBtn = item.adRewardable && window.AndroidBridge && AndroidBridge.showRewarded;
+      row.innerHTML = `
+        <div class="shop-icon">${item.icon}</div>
+        <div class="shop-info">
+          <div class="shop-name">${item.name}${showCount?`<span class="owned-count">x${count}</span>`:''}</div>
+          <div class="shop-desc">${item.desc}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          ${showAdBtn?`<button class="shop-buy-btn equip" data-ad="1">🎬 FREE</button>`:''}
+          <button class="shop-buy-btn ${btnClass}" data-buy="1">${btnLabel}</button>
+        </div>
+      `;
+      const buyBtn=row.querySelector('[data-buy]'); if(buyBtn) buyBtn.onclick=()=>this.buyItem(item.id);
+      const adBtn=row.querySelector('[data-ad]'); if(adBtn) adBtn.onclick=()=>AndroidBridge.showRewarded(item.id);
+      list.appendChild(row);
+    });
+  }
+
+  renderInventory(){
+    const placeable=SHOP_ITEMS.filter(i=>i.cat==='boost' && !i.instant && !i.passive);
+    const grid=document.getElementById('inventory-list');
+    grid.innerHTML='';
+    placeable.forEach(item=>{
+      const count=this.boosters[item.id]||0;
+      const div=document.createElement('div');
+      div.className='inv-item'+(count<=0?' disabled':'');
+      div.innerHTML=`<div class="inv-icon">${item.icon}</div><div class="inv-name">${item.name}</div><div class="inv-count">x${count}</div>`;
+      div.onclick=()=>{ if(item.id==='shuffle') this.useShuffleBooster(); else this.toggleBooster(item.id); };
+      grid.appendChild(div);
+    });
+  }
+
+  /* ---------- LEVEL MAP ---------- */
+  /* ---------- LEVEL MAP ----------
+     Lock status is based ONLY on highestUnlocked — NEVER on currentLevel/this.level,
+     which just tracks whichever level is being viewed/replayed. This is what keeps
+     unlocked levels from ever relocking when the player selects an earlier level. */
+  renderLevelMap(){
+    document.getElementById('map-coins').innerText=this.coins;
+    document.getElementById('map-continue-lv').innerText=this.level;
+    const container=document.getElementById('levelmap-list');
+    container.innerHTML='';
+    const maxUnlocked=this.highestUnlocked||1;
+    const total=Math.max(maxUnlocked+15,30);
+    for(let lvl=1; lvl<=total; lvl++){
+      const locked=lvl>maxUnlocked;
+      const stars=this.levelStars[lvl]||0;
+      const biome=this.biomeForLevel(lvl);
+      const node=document.createElement('div');
+      node.className='level-node'+(locked?' locked':'')+(lvl===this.level?' current':'')+(lvl%2===0?' right':' left');
+      node.innerHTML=`
+        <div class="node-circle" style="--accent:${biome.accent}">${locked?'🔒':(lvl===this.level?'▶':lvl)}</div>
+        <div class="node-stars">${stars>0?'⭐'.repeat(stars):''}</div>
+        <div class="node-biome">${biome.name}</div>
+      `;
+      if(!locked) node.onclick=()=>this.enterLevel(lvl);
+      container.appendChild(node);
+    }
+  }
+
+  /* ---------- ACHIEVEMENTS ---------- */
+  checkAchievements(){
+    for(const m of ACHIEVEMENT_MILESTONES){
+      if(this.level>=m && !this.achievements.includes(m)){
+        this.achievements.push(m);
+        this.pendingAchievement=m;
+        this.saveData();
+        break;
+      }
+    }
+  }
+  showAchievementOverlay(milestone){
+    document.getElementById('achievement-title').innerText=`LEVEL ${milestone} REACHED!`;
+    document.getElementById('achievement-reward').innerText=`+${milestone} Bonus Coins Unlocked!`;
+    this.coins+=milestone;
+    this.saveData(); this.updateUI();
+    this.lastAchievementMilestone=milestone;
+    document.getElementById('overlay-achievement').classList.add('active');
+  }
+  generateShareCard(milestone){
+    const cvs=document.createElement('canvas'); cvs.width=800; cvs.height=1000;
+    const ctx=cvs.getContext('2d');
+    const grad=ctx.createLinearGradient(0,0,0,1000); grad.addColorStop(0,'#1a0a3a'); grad.addColorStop(1,'#3a0f6e');
+    ctx.fillStyle=grad; ctx.fillRect(0,0,800,1000);
+    for(let i=0;i<60;i++){ ctx.fillStyle=`rgba(255,255,255,${Math.random()*0.5})`; ctx.fillRect(Math.random()*800,Math.random()*1000,2,2); }
+    ctx.fillStyle='#ffd166'; ctx.beginPath(); ctx.arc(400,300,150,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#1a0a3a'; ctx.font='bold 140px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('👑',400,330);
+    ctx.fillStyle='#ffffff'; ctx.font='bold 56px "Courier New", monospace'; ctx.fillText('KINGDOM CRUSH',400,520);
+    ctx.fillStyle='#ffd166'; ctx.font='bold 70px "Courier New", monospace'; ctx.fillText(`LEVEL ${milestone}`,400,610);
+    ctx.fillStyle='#ffffff'; ctx.font='bold 34px sans-serif'; ctx.fillText('MILESTONE UNLOCKED!',400,665);
+    ctx.fillStyle='#cdbfff'; ctx.font='26px sans-serif'; ctx.fillText('Follow my journey:',400,860);
+    ctx.fillStyle='#ffffff'; ctx.font='bold 32px sans-serif'; ctx.fillText('youtube.com/@ARNAV_KINGDOM',400,905);
+
+    const shareTitle='Kingdom Crush Achievement', shareText=`I just reached Level ${milestone} in Kingdom Crush! 👑`;
+
+    if(window.AndroidBridge && AndroidBridge.shareAchievement){
+      const base64=cvs.toDataURL('image/png').split(',')[1];
+      AndroidBridge.shareAchievement(base64, shareTitle, shareText);
+      return;
+    }
+
+    cvs.toBlob(async (blob)=>{
+      if(!blob) return;
+      const file=new File([blob], `kingdom-crush-level-${milestone}.png`, {type:'image/png'});
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        try{ await navigator.share({files:[file], title:shareTitle, text:shareText}); return; } catch(e){}
+      }
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download=`kingdom-crush-level-${milestone}.png`; document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  /* ---------- STATE CHECK & UI ---------- */
+  /* True once the CURRENT level's objective (score / jelly / collect / combo) has
+     been satisfied — replaces a plain score check so every objective type shares
+     the exact same win path (rewards, stars, unlock, achievements, leaderboard). */
+  isObjectiveComplete(){
+    const o=this.objective;
+    if(!o || o.type==='score') return this.score>=this.targetScore;
+    if(o.type==='jelly') return (this.jellyCleared||0)>=o.jellyTarget;
+    if(o.type==='collect') return Object.keys(o.collectTargets).every(k=>(this.collectedCounts[k]||0)>=o.collectTargets[k]);
+    if(o.type==='combo') return (this.jellyCleared||0)>=o.jellyTarget && this.score>=this.targetScore;
+    return this.score>=this.targetScore;
+  }
+  checkGameState(){
+    if(this.isObjectiveComplete()){
+      let reward=50+this.moves*5;
+      if(this.owned.netherStar) reward=Math.round(reward*1.2);
+      if(this.doubleCoinsActive){ reward*=2; this.doubleCoinsActive=false; }
+      this.coins+=reward;
+      const o=this.objective;
+      let stars;
+      if(!o || o.type==='score' || o.type==='combo'){
+        const ratio=this.score/this.targetScore;
+        stars=ratio>=1.6?3:ratio>=1.3?2:1;
+      } else {
+        const initialMoves=this.computeMoves(this.level)||1;
+        const ratio=this.moves/initialMoves;
+        stars=ratio>=0.5?3:ratio>=0.22?2:1;
+      }
+      this.levelStars[this.level]=Math.max(this.levelStars[this.level]||0,stars);
+      // PERMANENT PROGRESSION RULE — MAX only, never overwritten by a lower value.
+      // Completing level N unlocks N+1, but never relocks anything already unlocked
+      // (e.g. replaying/finishing an earlier level while level 100 is unlocked keeps it at 100).
+      const prevHighest=this.highestUnlocked||1;
+      this.highestUnlocked=Math.max(prevHighest,this.level+1);
+      audio.playWin();
+      this.saveData();
+      // Only ping the leaderboard when this is a genuine new personal-best level —
+      // never on a replay of an already-completed level (see LeaderboardService).
+      if(this.highestUnlocked>prevHighest && window.leaderboard) window.leaderboard.submitProgress(this);
+
+      this.checkAchievements();
+      if(this.pendingAchievement){
+        const m=this.pendingAchievement; this.pendingAchievement=null;
+        this.showAchievementOverlay(m);
+      } else {
+        document.getElementById('win-details').innerHTML=`${this.objectiveSummaryText()}<br>Bonus Coins: +${reward}`;
+        document.getElementById('win-stars').innerText='⭐'.repeat(stars)+'☆'.repeat(3-stars);
+        this.applyCosmetics();
+        document.getElementById('overlay-win').classList.add('active');
+      }
+      if(window.AndroidBridge && AndroidBridge.showInterstitial && this.level%5===0){
+        AndroidBridge.showInterstitial();
+      }
+    } else if(this.moves<=0){
+      if(this.owned.totem && !this.totemUsedThisLevel){
+        this.totemUsedThisLevel=true; this.moves+=5; this.updateUI();
+        this.showToast('Totem of Undying saved you! +5 moves');
+      } else {
+        document.getElementById('overlay-lose').classList.add('active');
+      }
+    } else if(!this.hasPossibleMoves()){
+      this.showToast('No moves! Auto-Shuffling...');
+      this.reshufflePlayableTiles();
+    }
+  }
+
+  /* No-move safety net (spec: after every refill/cascade, auto-reshuffle if stuck).
+     Shuffles ONLY the ordinary collectible tiles in place — every obstacle (Wooden
+     Fence, Cobweb, Stone, Ice, Obsidian) stays exactly where it is. Obstacles are
+     never reshuffled and Wooden Fences are never destroyed just to manufacture a
+     move. Re-verifies a valid move exists before settling on a shuffle. */
+  reshufflePlayableTiles(){
+    let tries=0, ok=false;
+    while(!ok && tries<60){
+      tries++;
+      const cells=[], types=[];
+      for(let r=0;r<BOARD_SIZE;r++) for(let c=0;c<BOARD_SIZE;c++){
+        const t=this.board[r][c];
+        if(t && !this.isObstacle(t) && t.type!==BLOCK_TYPES.RAINBOW && !t.special){ cells.push([r,c]); types.push(t.type); }
+      }
+      for(let i=types.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [types[i],types[j]]=[types[j],types[i]]; }
+      cells.forEach(([r,c],i)=>{ this.board[r][c].type=types[i]; });
+      if(this.hasPossibleMoves()) ok=true;
+    }
+    if(!ok){
+      // Last-resort fallback (astronomically unlikely): regenerate only the
+      // collectible layer while still leaving every obstacle cell untouched.
+      const maxColorIndex=this.getMaxColorIndex();
+      for(let r=0;r<BOARD_SIZE;r++) for(let c=0;c<BOARD_SIZE;c++){
+        const t=this.board[r][c];
+        if(t && !this.isObstacle(t) && t.type!==BLOCK_TYPES.RAINBOW && !t.special){ t.type=Math.floor(Math.random()*(maxColorIndex+1)); }
+      }
+    }
+  }
+
+  updateUI(){
+    const level=document.getElementById('ui-level'); if(level) level.innerText=this.level;
+    const moves=document.getElementById('ui-moves'); if(moves) moves.innerText=this.moves;
+    const coins=document.getElementById('ui-coins'); if(coins) coins.innerText=this.coins;
+    this.updateObjectiveUI();
+    const ch=document.getElementById('count-hammer'); if(ch) ch.innerText=this.boosters.hammer||0;
+    const cs=document.getElementById('count-shuffle'); if(cs) cs.innerText=this.boosters.shuffle||0;
+    const ct=document.getElementById('count-tnt'); if(ct) ct.innerText=this.boosters.tnt||0;
+    const mc=document.getElementById('menu-coins'); if(mc) mc.innerText=this.coins;
+    const ml=document.getElementById('menu-level'); if(ml) ml.innerText=this.level;
+  }
+  
+  /* ---------- OBJECTIVE HUD ----------
+     Drives the progress bar/label AND the small objective chip under the biome
+     label so every objective type (score / jelly / collect / combo) is always
+     clearly readable during play, not just the classic score bar. */
+  objectiveSummaryText(){
+    const o=this.objective;
+    if(!o || o.type==='score') return `Score: ${this.score}`;
+    if(o.type==='jelly') return `Jelly Cleared: ${Math.min(this.jellyCleared||0,o.jellyTarget)}/${o.jellyTarget}`;
+    if(o.type==='combo') return `Jelly: ${Math.min(this.jellyCleared||0,o.jellyTarget)}/${o.jellyTarget} · Score: ${this.score}`;
+    if(o.type==='collect'){
+      return Object.entries(o.collectTargets).map(([t,n])=>`${COLLECTIBLE_META[t].name}: ${Math.min(this.collectedCounts[t]||0,n)}/${n}`).join(' · ');
+    }
+    return `Score: ${this.score}`;
+  }
+  updateObjectiveUI(){
+    const o=this.objective;
+    const bar=document.getElementById('ui-progress');
+    const st=document.getElementById('ui-score-text');
+    const chip=document.getElementById('ui-objective');
+    let pct=0, text='', chipText='';
+    if(!o || o.type==='score'){
+      pct=Math.min(100,Math.floor((this.score/this.targetScore)*100));
+      text=`SCORE: ${this.score} / ${this.targetScore}`;
+      chipText='🎯 REACH THE TARGET SCORE';
+    } else if(o.type==='jelly'){
+      const cur=Math.min(this.jellyCleared||0,o.jellyTarget);
+      pct=Math.min(100,Math.floor((cur/o.jellyTarget)*100));
+      text=`JELLY: ${cur} / ${o.jellyTarget}`;
+      chipText=`🍮 ${o.label}`;
+    } else if(o.type==='combo'){
+      const curJ=Math.min(this.jellyCleared||0,o.jellyTarget);
+      const jP=curJ/o.jellyTarget, sP=Math.min(1,this.score/this.targetScore);
+      pct=Math.floor(Math.min(jP,sP)*100);
+      text=`JELLY ${curJ}/${o.jellyTarget} · SCORE ${this.score}/${this.targetScore}`;
+      chipText=`🍮🎯 ${o.label}`;
+    } else if(o.type==='collect'){
+      const entries=Object.entries(o.collectTargets);
+      const fracs=entries.map(([t,n])=>Math.min(1,(this.collectedCounts[t]||0)/n));
+      pct=Math.floor(Math.min(...fracs)*100);
+      text=entries.map(([t,n])=>`${COLLECTIBLE_META[t].icon}${Math.min(this.collectedCounts[t]||0,n)}/${n}`).join('  ');
+      chipText=`${entries.map(([t])=>COLLECTIBLE_META[t].icon).join('')} ${o.label}`;
+    }
+    if(bar) bar.style.width=`${pct}%`;
+    if(st) st.innerText=text;
+    if(chip) chip.innerText=chipText;
+  }
+
+  showToast(msg){
+    const t=document.getElementById('toast');
+    t.innerText=msg; t.classList.add('show');
+    clearTimeout(this._toastTimer);
+    this._toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+  }
+
+  delay(ms){ return new Promise(resolve=>setTimeout(resolve,ms)); }
+
+  /* ---------- GLOBAL LEADERBOARD UI ---------- */
+  async renderLeaderboard(){
+    const listEl=document.getElementById('leaderboard-list');
+    const stateEl=document.getElementById('leaderboard-state');
+    const nameEl=document.getElementById('leaderboard-my-name');
+    if(!listEl) return;
+    nameEl.innerText = this.displayName ? `You: ${this.displayName}` : 'You: (no name set)';
+    if(!this.displayName){
+      stateEl.innerHTML = `<div class="lb-empty">Set a display name to join the leaderboard.</div>`;
+      listEl.innerHTML='';
+      return;
+    }
+    stateEl.innerHTML = `<div class="lb-loading">Loading leaderboard…</div>`;
+    listEl.innerHTML='';
+    const result = await window.leaderboard.fetchTop(50);
+    if(!result.entries.length){
+      stateEl.innerHTML = result.online ? '' : `<div class="lb-offline">📴 OFFLINE — showing local progress only. Will sync when you're back online.</div>`;
+      listEl.innerHTML = `<div class="lb-empty">No entries yet — be the first!</div>`;
+      return;
+    }
+    stateEl.innerHTML = result.online ? '' : `<div class="lb-offline">📴 OFFLINE — showing local progress only. Will sync when you're back online.</div>`;
+    const medal=(i)=> i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`;
+    listEl.innerHTML = result.entries.map((e,i)=>`
+      <div class="lb-row ${i<3?'lb-top':''} ${e.name===this.displayName?'lb-me':''}">
+        <div class="lb-rank">${medal(i)}</div>
+        <div class="lb-name">${(e.name||'?').replace(/</g,'&lt;')}</div>
+        <div class="lb-stats">LV ${e.level||1} · ⭐${e.stars||0} · ${e.score||0}</div>
+      </div>`).join('');
+  }
+  promptDisplayName(afterSet){
+    const current=this.displayName||'';
+    const input=prompt('Choose a display name (max 16 characters, no personal info needed):', current);
+    if(input===null) return;
+    const trimmed=input.trim().slice(0,16);
+    if(!trimmed){ this.showToast('Name cannot be empty.'); return; }
+    window.leaderboard.setName(trimmed);
+    this.showToast(`Display name set: ${trimmed}`);
+    if(afterSet) afterSet();
+  }
+}
+
+let game;
+window.addEventListener('load',()=>{ game=new KingdomCrush(); game.init(); });
+
+/* ===================== GLOBAL LEADERBOARD SERVICE ===================== */
+/* Backend: Firebase Firestore — loaded lazily and ONLY if a config object is
+   supplied externally (see FIREBASE_SETUP.md, delivered separately). Without a
+   config, the game runs in a fully-functional "Offline" leaderboard mode that
+   never touches the network. Gameplay, saves, and progress are 100% unaffected
+   either way — the leaderboard is strictly additive, never a gate. */
+const FIREBASE_CONFIG = window.KINGDOM_CRUSH_FIREBASE_CONFIG || null;
+
+class LeaderboardService{
+  constructor(){
+    this.mode = FIREBASE_CONFIG ? 'firebase' : 'offline';
+    this.ready=false; this.db=null; this.auth=null; this.uid=null;
+    this.online = typeof navigator!=='undefined' ? navigator.onLine : true;
+    window.addEventListener('online', ()=>{ this.online=true; this._flushPending(); });
+    window.addEventListener('offline', ()=>{ this.online=false; });
+    if(this.mode==='firebase') this._initFirebase();
+  }
+  _loadScript(src){
+    return new Promise((resolve,reject)=>{
+      const s=document.createElement('script'); s.src=src; s.onload=resolve; s.onerror=reject;
+      document.head.appendChild(s);
+    });
+  }
+  async _initFirebase(){
+    try{
+      if(!window.firebase){
+        await this._loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+        await this._loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js');
+        await this._loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js');
+      }
+      firebase.initializeApp(FIREBASE_CONFIG);
+      this.auth=firebase.auth();
+      this.db=firebase.firestore();
+      const cred=await this.auth.signInAnonymously();
+      this.uid=cred.user.uid;
+      this.ready=true;
+      this._flushPending();
+    }catch(e){
+      console.warn('[Leaderboard] Firebase unavailable, using offline mode.', e);
+      this.mode='offline';
+    }
+  }
+  hasName(){ return !!(game && game.displayName); }
+  setName(name){
+    name=(name||'').trim().slice(0,16);
+    if(!name || !game) return false;
+    game.displayName=name; game.saveData();
+    if(this.mode==='firebase' && this.ready) this.submitProgress(game); // re-sync under new name
+    return true;
+  }
+  /* Called ONLY from checkGameState, and only when highestUnlocked just moved to a
+     genuine new personal best — never on every match/move, per spec. This is also
+     the anti-cheat backstop: the client only ever offers to write the number it
+     already computed via the normal win-condition path (see checkGameState), and
+     Firestore rules (see firestore.rules) independently reject any write where the
+     level jumps by more than +1 from the previously stored value. */
+  async submitProgress(gameState){
+    if(!this.hasName()) return;
+    const entry={
+      name: gameState.displayName,
+      level: gameState.highestUnlocked,
+      stars: Object.values(gameState.levelStars||{}).reduce((a,b)=>a+b,0),
+      score: Math.max(gameState.score||0, gameState.highScore||0),
+      updatedAt: Date.now()
+    };
+    if(this.mode==='offline' || !this.online){ this._saveOfflinePending(entry); return; }
+    try{ await this._writeFirestore(entry); }
+    catch(e){ this._saveOfflinePending(entry); }
+  }
+  _saveOfflinePending(entry){
+    localStorage.setItem('KINGDOM_CRUSH_LB_PENDING', JSON.stringify(entry));
+    this._updateLocalBoard(entry);
+  }
+  _updateLocalBoard(entry){
+    // Local device-only simulated board so Offline mode still shows something
+    // meaningful. Always rendered with a clear "Offline" label — never presented
+    // to the player as real global data.
+    try{
+      const board=JSON.parse(localStorage.getItem('KINGDOM_CRUSH_LB_LOCAL')||'[]');
+      const idx=board.findIndex(e=>e.name===entry.name);
+      if(idx>=0) board[idx]=entry; else board.push(entry);
+      localStorage.setItem('KINGDOM_CRUSH_LB_LOCAL', JSON.stringify(board));
+    }catch(e){}
+  }
+  async _writeFirestore(entry){
+    const ref=this.db.collection('leaderboard').doc(this.uid);
+    // Server-authoritative timestamp: firestore.rules requires updatedAt to equal
+    // request.time exactly, which only a server timestamp sentinel satisfies — a
+    // client-supplied Date.now() would be rejected. The plain Date.now() version
+    // stays in the local-only offline board (see _updateLocalBoard) since that
+    // never touches Firestore.
+    const payload=Object.assign({}, entry, { updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    await ref.set(payload, {merge:true});
+  }
+  async _flushPending(){
+    if(this.mode!=='firebase' || !this.ready || !this.online) return;
+    const pending=localStorage.getItem('KINGDOM_CRUSH_LB_PENDING');
+    if(!pending) return;
+    try{ await this._writeFirestore(JSON.parse(pending)); localStorage.removeItem('KINGDOM_CRUSH_LB_PENDING'); }catch(e){}
+  }
+  async fetchTop(n=50){
+    if(this.mode==='firebase' && this.online && this.ready){
+      try{
+        const snap=await this.db.collection('leaderboard')
+          .orderBy('level','desc').orderBy('stars','desc').orderBy('score','desc')
+          .limit(n).get();
+        return { online:true, entries: snap.docs.map(d=>d.data()) };
+      }catch(e){ /* fall through to local */ }
+    }
+    const board=JSON.parse(localStorage.getItem('KINGDOM_CRUSH_LB_LOCAL')||'[]');
+    board.sort((a,b)=> (b.level-a.level) || (b.stars-a.stars) || (b.score-a.score));
+    return { online:false, entries: board.slice(0,n) };
+  }
+}
+window.leaderboard = new LeaderboardService();
+
+/* Called by Android (WebAppInterface) after a rewarded ad is completed. */
+window.onRewardedAdComplete = function(type){ if(game) game.handleRewardedAd(type); };
+
+/* Called by Android (MainActivity.onBackPressed) before falling back to default back behavior.
+   Returns true (as a string) if the in-game back action was handled, false if Android should exit/finish. */
+window.onAndroidBack = function(){
+  if(!game) return false;
+  const activeOverlay=document.querySelector('.overlay.active');
+  if(activeOverlay){ activeOverlay.classList.remove('active'); return true; }
+  if(game.currentScreen==='game'){ document.getElementById('overlay-pause').classList.add('active'); return true; }
+  if(game.currentScreen==='menu'){ return false; }
+  game.navigate('menu'); return true;
+};
+</script>
+</body>
+</html>
