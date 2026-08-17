@@ -1,0 +1,43 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.kingdom.crush'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.kingdom.crush"
+        // NOTE: change applicationId above BEFORE your first Play Store upload.
+        // It cannot be changed later without publishing as a new app.
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            // Debug builds are auto-signed with the default debug keystore,
+            // which is why GitHub Actions can produce an installable APK
+            // with zero manual signing setup.
+            debuggable true
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
+    // Google Mobile Ads (AdMob) SDK
+    implementation 'com.google.android.gms:play-services-ads:23.2.0'
+}
